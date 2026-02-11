@@ -1,0 +1,25 @@
+name: Sync to Hugging Face Hub
+
+on:
+  push:
+    branches: [main] # 當 main 分支有更新時觸發
+  workflow_dispatch: # 允許手動觸發
+
+jobs:
+  sync-to-hub:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Push to hub
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          # 將你的程式碼推送到 Hugging Face Spaces
+          git push --force-with-lease https://cwbdayi:$HF_TOKEN@huggingface.co/spaces/cwbdayi/EEW_quality_control main:main
