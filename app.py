@@ -1,633 +1,626 @@
 #!/usr/bin/env python3
 """
-Earthquake Early Warning (EEW) Quality Control Web Interface
-A Gradio-based web application for analyzing and visualizing EEW data
+Taiwan Earthquake Data Fetcher
+使用 ObsPy 從 IRIS FDSN 抓取臺灣地震記錄和波形資料
 """
 
 import gradio as gr
-import os
-import sys
-import subprocess
-from pathlib import Path
-import tempfile
-import shutil
-import pandas as pd
-import numpy as np
+import io
+import base64
+from datetime import datetime, timedelta
 import matplotlib
-matplotlib.use('Agg')  # Use non-interactive backend for server
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from obspy import UTCDateTime
+from obspy.clients.fdsn import Client
+import numpy as np
 
-# Ensure the current directory is in the path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# IRIS FDSN 客戶端（延遲初始化）
+_client = None
+
+def get_client():
+    """獲取或初始化 IRIS FDSN 客戶端"""
+    global _client
+    if _client is None:
+        try:
+            _client = Client("IRIS")
+        except Exception as e:
+            raise Exception(f"無法連接到 IRIS FDSN 服務: {str(e)}\n\n請檢查網路連線或稍後再試。")
+    return _client
+
+def search_earthquakes(start_date, end_date, min_magnitude, max_magnitude, 
+                      min_depth, max_depth, min_latitude, max_latitude, 
+                      min_longitude, max_longitude):
+    """
+    搜尋臺灣地震記錄
+    
+    Parameters:
+    -----------
+    start_date, end_date : str
+        搜尋時間範圍
+    min_magnitude, max_magnitude : float
+        震級範圍
+    min_depth, max_depth : float
+        深度範圍（公里）
+    min_latitude, max_latitude : float
+        緯度範圍
+    min_longitude, max_longitude : float
+        經度範圍
+    
+    Returns:
+    --------
+    str : 搜尋結果文字
+    """
+    try:
+        # 獲取客戶端
+        client = get_client()
+        
+        # 轉換日期格式
+        starttime = UTCDateTime(start_date)
+        endtime = UTCDateTime(end_date)
+        
+        # 搜尋地震目錄
+        catalog = client.get_events(
+            starttime=starttime,
+            endtime=endtime,
+            minmagnitude=min_magnitude,
+            maxmagnitude=max_magnitude,
+            mindepth=min_depth,
+            maxdepth=max_depth,
+            minlatitude=min_latitude,
+            maxlatitude=max_latitude,
+            minlongitude=min_longitude,
+            maxlongitude=max_longitude
+        )
+        
+        if len(catalog) == 0:
+            return "未找到符合條件的地震記錄"
+        
+        # 格式化輸出
+        result = f"找到 {len(catalog)} 筆地震記錄:\n\n"
+        result += "=" * 80 + "\n"
+        
+        for i, event in enumerate(catalog, 1):
+            origin = event.preferred_origin() or event.origins[0]
+            magnitude = event.preferred_magnitude() or event.magnitudes[0]
+            
+            result += f"\n地震 #{i}:\n"
+            result += f"  時間: {origin.time}\n"
+            result += f"  震級: {magnitude.mag:.1f} ({magnitude.magnitude_type})\n"
+            result += f"  位置: {origin.latitude:.3f}°N, {origin.longitude:.3f}°E\n"
+            result += f"  深度: {origin.depth/1000:.1f} km\n"
+            
+            if origin.region:
+                result += f"  區域: {origin.region}\n"
+            
+            result += "-" * 80 + "\n"
+        
+        return result
+        
+    except Exception as e:
+        return f"錯誤: {str(e)}\n\n請檢查搜尋條件是否正確，或確認網路連線正常。"
+
+
+def fetch_waveforms(event_time, latitude, longitude, networks, stations, 
+                   channels, duration_before, duration_after):
+    """
+    抓取地震波形資料
+    
+    Parameters:
+    -----------
+    event_time : str
+        地震發生時間
+    latitude, longitude : float
+        地震位置
+    networks : str
+        網路代碼（逗號分隔，如 "TW,IU"）
+    stations : str
+        測站代碼（逗號分隔，留空表示全部）
+    channels : str
+        通道代碼（如 "BH*" 表示所有寬頻通道）
+    duration_before, duration_after : float
+        事件前後的時間長度（秒）
+    
+    Returns:
+    --------
+    str : 波形資料資訊
+    fig : matplotlib figure
+    """
+    try:
+        # 獲取客戶端
+        client = get_client()
+        
+        # 轉換時間
+        event_time_utc = UTCDateTime(event_time)
+        starttime = event_time_utc - duration_before
+        endtime = event_time_utc + duration_after
+        
+        # 處理網路和測站列表
+        network_list = [n.strip() for n in networks.split(',') if n.strip()]
+        station_list = [s.strip() for s in stations.split(',') if s.strip()] if stations.strip() else ["*"]
+        
+        # 抓取波形資料
+        all_streams = []
+        info_text = f"正在抓取波形資料...\n"
+        info_text += f"時間範圍: {starttime} 至 {endtime}\n"
+        info_text += f"網路: {', '.join(network_list)}\n\n"
+        
+        for network in network_list:
+            for station in station_list:
+                try:
+                    st = client.get_waveforms(
+                        network=network,
+                        station=station,
+                        location="*",
+                        channel=channels,
+                        starttime=starttime,
+                        endtime=endtime
+                    )
+                    
+                    if len(st) > 0:
+                        all_streams.append(st)
+                        info_text += f"✓ {network}.{station}: 找到 {len(st)} 個通道\n"
+                        
+                except Exception as e:
+                    info_text += f"✗ {network}.{station}: {str(e)}\n"
+        
+        if len(all_streams) == 0:
+            return "未找到符合條件的波形資料", None
+        
+        # 合併所有波形
+        from obspy import Stream
+        combined_stream = Stream()
+        for st in all_streams:
+            combined_stream += st
+        
+        info_text += f"\n總共抓取到 {len(combined_stream)} 個波形通道\n"
+        info_text += "=" * 80 + "\n\n"
+        
+        # 列出所有波形
+        info_text += "波形清單:\n"
+        for i, tr in enumerate(combined_stream, 1):
+            info_text += f"{i}. {tr.id} | {tr.stats.starttime} | "
+            info_text += f"取樣率: {tr.stats.sampling_rate} Hz | "
+            info_text += f"資料點: {tr.stats.npts}\n"
+        
+        # 繪製波形圖
+        fig = plot_waveforms(combined_stream, event_time_utc, latitude, longitude)
+        
+        return info_text, fig
+        
+    except Exception as e:
+        import traceback
+        return f"錯誤: {str(e)}\n\n{traceback.format_exc()}", None
+
+
+def plot_waveforms(stream, event_time, event_lat, event_lon):
+    """
+    繪製波形圖
+    
+    Parameters:
+    -----------
+    stream : obspy.Stream
+        波形資料流
+    event_time : UTCDateTime
+        地震發生時間
+    event_lat, event_lon : float
+        地震位置
+    
+    Returns:
+    --------
+    matplotlib.figure.Figure
+    """
+    # 設定中文字體
+    try:
+        matplotlib.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'Microsoft YaHei', 'SimHei']
+        matplotlib.rcParams['axes.unicode_minus'] = False
+    except:
+        pass
+    
+    # 限制繪製的波形數量
+    max_traces = min(10, len(stream))
+    
+    fig, axes = plt.subplots(max_traces, 1, figsize=(14, max_traces * 1.5))
+    if max_traces == 1:
+        axes = [axes]
+    
+    for i, tr in enumerate(stream[:max_traces]):
+        ax = axes[i]
+        
+        # 準備資料
+        times = tr.times()
+        data = tr.data
+        
+        # 繪製波形
+        ax.plot(times, data, 'k-', linewidth=0.5)
+        
+        # 標記地震發生時間
+        if event_time:
+            event_offset = event_time - tr.stats.starttime
+            if 0 <= event_offset <= times[-1]:
+                ax.axvline(event_offset, color='r', linestyle='--', linewidth=2, 
+                          label='地震發生', alpha=0.7)
+        
+        # 設定標籤
+        ax.set_ylabel(f'{tr.id}\n振幅', fontsize=8)
+        ax.grid(True, alpha=0.3)
+        ax.legend(loc='upper right', fontsize=7)
+        
+        # 只在最後一個子圖顯示 x 軸標籤
+        if i == max_traces - 1:
+            ax.set_xlabel('時間 (秒)', fontsize=10)
+        else:
+            ax.set_xticklabels([])
+    
+    # 設定標題
+    title = f'地震波形資料\n'
+    title += f'地震時間: {event_time} | 位置: {event_lat:.3f}°N, {event_lon:.3f}°E\n'
+    title += f'顯示前 {max_traces} 個通道（共 {len(stream)} 個）'
+    fig.suptitle(title, fontsize=12, fontweight='bold')
+    
+    plt.tight_layout()
+    
+    return fig
+
+
+def create_earthquake_map(catalog_text):
+    """
+    繪製地震分布地圖
+    
+    Parameters:
+    -----------
+    catalog_text : str
+        地震目錄文字
+    
+    Returns:
+    --------
+    matplotlib.figure.Figure
+    """
+    try:
+        # 從文字中解析地震資料
+        lines = catalog_text.split('\n')
+        lats, lons, mags, depths = [], [], [], []
+        
+        for i, line in enumerate(lines):
+            if '位置:' in line:
+                # 解析位置
+                parts = line.split(':')[1].split(',')
+                lat = float(parts[0].replace('°N', '').strip())
+                lon = float(parts[1].replace('°E', '').strip())
+                lats.append(lat)
+                lons.append(lon)
+                
+                # 解析震級
+                mag_line = lines[i-1]
+                mag = float(mag_line.split(':')[1].split()[0])
+                mags.append(mag)
+                
+                # 解析深度
+                depth_line = lines[i+1]
+                depth = float(depth_line.split(':')[1].split()[0])
+                depths.append(depth)
+        
+        if len(lats) == 0:
+            return None
+        
+        # 設定中文字體
+        try:
+            matplotlib.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'Microsoft YaHei', 'SimHei']
+            matplotlib.rcParams['axes.unicode_minus'] = False
+        except:
+            pass
+        
+        # 繪製地圖
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+        
+        # 左圖：地震分布
+        scatter = ax1.scatter(lons, lats, c=depths, s=[m**2*10 for m in mags], 
+                            alpha=0.6, cmap='viridis_r', edgecolors='black', linewidth=0.5)
+        ax1.set_xlabel('經度 (°E)', fontsize=11)
+        ax1.set_ylabel('緯度 (°N)', fontsize=11)
+        ax1.set_title('地震分布圖\n（大小表示震級，顏色表示深度）', fontsize=12, fontweight='bold')
+        ax1.grid(True, alpha=0.3)
+        
+        # 添加台灣輪廓參考
+        ax1.plot([120, 122], [22, 22], 'k--', alpha=0.3, linewidth=0.5)
+        ax1.plot([120, 122], [25, 25], 'k--', alpha=0.3, linewidth=0.5)
+        ax1.plot([120, 120], [22, 25], 'k--', alpha=0.3, linewidth=0.5)
+        ax1.plot([122, 122], [22, 25], 'k--', alpha=0.3, linewidth=0.5)
+        
+        cbar = plt.colorbar(scatter, ax=ax1)
+        cbar.set_label('深度 (km)', fontsize=10)
+        
+        # 右圖：震級-深度關係
+        scatter2 = ax2.scatter(mags, depths, c=depths, s=100, 
+                              alpha=0.6, cmap='viridis_r', edgecolors='black', linewidth=0.5)
+        ax2.set_xlabel('震級', fontsize=11)
+        ax2.set_ylabel('深度 (km)', fontsize=11)
+        ax2.set_title('震級-深度關係圖', fontsize=12, fontweight='bold')
+        ax2.grid(True, alpha=0.3)
+        ax2.invert_yaxis()
+        
+        plt.tight_layout()
+        
+        return fig
+        
+    except Exception as e:
+        print(f"繪製地圖時發生錯誤: {e}")
+        return None
 
 
 def create_interface():
-    """Create the Gradio interface for EEW Quality Control"""
+    """建立 Gradio 介面"""
     
-    with gr.Blocks(title="地震預警品質控制系統") as demo:
+    with gr.Blocks(title="臺灣地震資料查詢系統", theme=gr.themes.Soft()) as demo:
         gr.Markdown(
             """
-            # 地震預警（EEW）品質控制系統
+            # 🌏 臺灣地震資料查詢系統
             
-            本應用程式提供地震預警（EEW）資料分析與視覺化工具。
+            使用 ObsPy 從 IRIS FDSN 抓取臺灣地震記錄和地震波形資料
             
-            ## 功能特色：
-            - **報告處理**：將地震預警報告轉換為文字格式
-            - **資料視覺化**：繪製地震預警報告摘要與地圖
-            - **品質分析**：分析報告時間與觸發地圖
-            - **縣市分析**：依縣市分析地震預警資料
+            ## 功能說明
             
-            ## 可用功能：
-            - **🗺️ TSMIP 觸發地圖**：上傳報告檔案和測站資料，生成互動式觸發地圖
-            - **🧪 環境測試**：檢查系統環境與相依套件
-            - **📖 使用說明**：詳細的腳本使用文件
-            - **🎯 互動式展示**：地震預警系統效能展示範例
+            1. **地震目錄查詢**：搜尋特定時間和區域的地震記錄
+            2. **地震波形抓取**：下載地震事件的波形資料（支援 TW 和 IU 網路）
+            3. **資料視覺化**：繪製地震分布圖和波形圖
+            
+            ---
             """
         )
         
-        with gr.Tab("📊 關於"):
+        with gr.Tab("📋 地震目錄查詢"):
             gr.Markdown(
                 """
-                ### 地震預警品質控制工具
+                ### 搜尋地震記錄
                 
-                本儲存庫包含用於分析地震預警（EEW）系統資料的 Python 腳本：
-                
-                1. **01_rep2txt_pfile.py**：使用 P 檔輸入將報告檔案轉換為文字格式
-                2. **02_plot_report_pfile.py**：從 P 檔資料繪製地震預警報告摘要
-                3. **03_plot_ez_maps.py**：繪製震央區域地圖
-                4. **04_plot_tsmip_trigger_map.py**：繪製 TSMIP 觸發地圖
-                5. **05_plot_conunty.py**：依縣市分析資料
-                6. **06_plot_reporting_time_pfile.py**：繪製報告時間分析
-                
-                ### 資料需求
-                
-                腳本需要以下資料檔案：
-                - `192/` 目錄中的 P 檔（副檔名為 .P20）
-                - 測站資料（`station.txt`）
-                - 縣市清單（`county_list.txt`）
-                - 縣市邊界資料（`city_2016.gmt`）
-                - 地震預警報告檔案（`.rep` 檔案）
-                - 包含地震資料的 XML 檔案
-                
-                ### 使用方式
-                
-                使用這些工具時，您需要：
-                1. 準備所需格式的資料檔案
-                2. 將 P 檔放置在 `192/` 目錄中
-                3. 使用必要的參數執行適當的腳本
-                
-                ### 命令列使用範例
-                
-                ```bash
-                # 將報告檔案轉換為文字
-                python 01_rep2txt_pfile.py
-                
-                # 繪製報告摘要
-                python 02_plot_report_pfile.py <pfile> --kind all
-                
-                # 繪製震央區域地圖
-                python 03_plot_ez_maps.py <pfile> --epi-lon 120.5 --epi-lat 23.5
-                
-                # 繪製觸發地圖
-                python 04_plot_tsmip_trigger_map.py <pfile>
-                
-                # 繪製縣市分析
-                python 05_plot_conunty.py <pfile>
-                
-                # 繪製報告時間
-                python 06_plot_reporting_time_pfile.py <pfile>
-                ```
-                
-                ### 相依套件
-                
-                - Python 3.7+
-                - pandas
-                - numpy
-                - matplotlib
-                - obspy
-                - pygmt
-                
-                ### 儲存庫
-                
-                原始碼：[github.com/oceanicdayi/EEW_quality_control](https://github.com/oceanicdayi/EEW_quality_control)
-                """
-            )
-        
-        with gr.Tab("🧪 環境測試"):
-            gr.Markdown(
-                """
-                ### 環境檢查
-                
-                點擊下方按鈕以驗證所有必要的相依套件是否已安裝且可存取。
-                """
-            )
-            
-            test_output = gr.Textbox(
-                label="測試結果",
-                lines=10,
-                max_lines=20,
-                interactive=False
-            )
-            
-            def run_environment_test():
-                """Run basic environment checks"""
-                output = []
-                output.append("=== 地震預警品質控制環境測試 ===\n")
-                
-                # Check Python version
-                import sys
-                output.append(f"Python 版本：{sys.version}\n")
-                
-                # Check dependencies
-                deps = {
-                    "pandas": "pandas",
-                    "numpy": "numpy", 
-                    "matplotlib": "matplotlib",
-                    "obspy": "obspy",
-                    "pygmt": "pygmt",
-                    "gradio": "gradio"
-                }
-                
-                output.append("\n=== 檢查相依套件 ===")
-                for name, module in deps.items():
-                    try:
-                        mod = __import__(module)
-                        version = getattr(mod, '__version__', 'unknown')
-                        output.append(f"✓ {name}：{version}")
-                    except ImportError as e:
-                        output.append(f"✗ {name}：未找到 - {e}")
-                
-                # Check for data files
-                output.append("\n=== 檢查資料檔案 ===")
-                required_files = [
-                    "eewrep_function.py",
-                    "01_rep2txt_pfile.py",
-                    "02_plot_report_pfile.py",
-                    "03_plot_ez_maps.py",
-                    "04_plot_tsmip_trigger_map.py",
-                    "05_plot_conunty.py",
-                    "06_plot_reporting_time_pfile.py"
-                ]
-                
-                for filepath in required_files:
-                    if os.path.exists(filepath):
-                        output.append(f"✓ {filepath}")
-                    else:
-                        output.append(f"✗ {filepath} - 未找到")
-                
-                # Check directories
-                output.append("\n=== 檢查目錄 ===")
-                dirs = ["192", "outputs", "old"]
-                for dirname in dirs:
-                    if os.path.exists(dirname):
-                        output.append(f"✓ {dirname}/ - 存在")
-                    else:
-                        output.append(f"✗ {dirname}/ - 未找到")
-                
-                output.append("\n=== 測試完成 ===")
-                output.append("\n注意：這是地震預警品質控制工具的部署版本。")
-                output.append("若要使用應用程式的完整功能，您需要提供所需的資料檔案。")
-                
-                return "\n".join(output)
-            
-            test_button = gr.Button("執行環境測試", variant="primary")
-            test_button.click(fn=run_environment_test, outputs=test_output)
-        
-        with gr.Tab("📖 使用說明"):
-            gr.Markdown(
-                """
-                ### 腳本說明文件
-                
-                #### 01_rep2txt_pfile.py
-                使用 P 檔輸入將地震預警報告檔案轉換為文字格式。
-                
-                **使用方式：**
-                ```bash
-                python 01_rep2txt_pfile.py
-                ```
-                
-                ---
-                
-                #### 02_plot_report_pfile.py
-                從 P 檔資料繪製地震預警報告摘要。
-                
-                **參數：**
-                - `pfile`：P 檔名稱（例如：17010623.P20）
-                - `--kind`：分析類型（f42/f43/gei/all，預設：all）
-                - `--base-folder`：包含 .rep 檔案的目錄（預設：./192）
-                - `--xmin`、`--xmax`：X 軸範圍（秒）
-                - `--ymin`、`--ymax`：Y 軸範圍
-                
-                **使用方式：**
-                ```bash
-                python 02_plot_report_pfile.py 17010623.P20 --kind all
-                ```
-                
-                ---
-                
-                #### 03_plot_ez_maps.py
-                繪製震央區域地圖。
-                
-                **參數：**
-                - `pfile`：P 檔名稱
-                - `--epi-lon`：震央經度（必要）
-                - `--epi-lat`：震央緯度（必要）
-                - `--kind`：分析類型（f42/f43/gei/all，預設：all）
-                - `--base-folder`：包含 .rep 檔案的目錄（預設：./192）
-                
-                **使用方式：**
-                ```bash
-                python 03_plot_ez_maps.py 17010623.P20 --epi-lon 120.5 --epi-lat 23.5
-                ```
-                
-                ---
-                
-                #### 04_plot_tsmip_trigger_map.py
-                繪製 TSMIP 觸發地圖。
-                
-                **參數：**
-                - `pfile`：P 檔名稱
-                - `--kind`：分析類型（f42/f43/gei/all，預設：all）
-                - `--base-folder`：包含 .rep 檔案的目錄（預設：./192）
-                
-                **使用方式：**
-                ```bash
-                python 04_plot_tsmip_trigger_map.py 17010623.P20
-                ```
-                
-                ---
-                
-                #### 05_plot_conunty.py
-                依縣市分析地震預警資料。
-                
-                **參數：**
-                - `pfile`：P 檔名稱
-                - `--kind`：分析類型（f42/f43/gei/all，預設：all）
-                - `--base-folder`：包含 .rep 檔案的目錄（預設：./192）
-                
-                **使用方式：**
-                ```bash
-                python 05_plot_conunty.py 17010623.P20
-                ```
-                
-                ---
-                
-                #### 06_plot_reporting_time_pfile.py
-                從 P 檔資料繪製報告時間分析。
-                
-                **參數：**
-                - `pfile`：P 檔名稱
-                - `--kind`：分析類型（f42/f43/gei/all，預設：all）
-                - `--base-folder`：包含 .rep 檔案的目錄（預設：./192）
-                - `--xmin`、`--xmax`：X 軸範圍（秒）
-                
-                **使用方式：**
-                ```bash
-                python 06_plot_reporting_time_pfile.py 17010623.P20
-                ```
-                
-                ---
-                
-                ### 資料檔案格式
-                
-                #### P 檔格式
-                P 檔包含地震參數與測站資料：
-                - 第 1 行：事件資訊（時間、規模、深度）
-                - 第 2 行以後：測站資訊（名稱、到時、震度、PGA）
-                
-                #### 報告檔案（.rep）
-                報告檔案包含地震預警系統報告，包括時間與位置資訊。
-                
-                #### XML 檔案
-                XML 檔案包含中央氣象署（CWA）的官方地震資訊。
-                
-                ### 聯絡方式
-                
-                如有問題或疑問，請訪問 GitHub 儲存庫：
-                [github.com/oceanicdayi/EEW_quality_control](https://github.com/oceanicdayi/EEW_quality_control)
-                """
-            )
-        
-        with gr.Tab("🗺️ TSMIP 觸發地圖"):
-            gr.Markdown(
-                """
-                ### TSMIP 觸發地圖生成器
-                
-                此功能可以繪製 TSMIP 測站觸發地圖，顯示：
-                - 所有 TSMIP 測站位置（灰色三角形）
-                - 已觸發的測站（紅色三角形）
-                - 震央位置（黃色星號）
-                - 最遠觸發距離範圍圓圈
-                - 觸發比率統計
+                設定搜尋條件以查詢臺灣地區的地震記錄。預設範圍涵蓋臺灣本島及周邊海域。
                 """
             )
             
             with gr.Row():
                 with gr.Column():
-                    rep_file = gr.File(
-                        label="上傳報告檔案 (.rep)",
-                        file_types=[".rep"],
-                        type="filepath"
+                    gr.Markdown("#### 時間範圍")
+                    start_date = gr.Textbox(
+                        label="開始日期",
+                        value=(datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d"),
+                        placeholder="YYYY-MM-DD"
                     )
-                    station_file = gr.File(
-                        label="上傳測站檔案 (station.txt)",
-                        file_types=[".txt"],
-                        type="filepath"
+                    end_date = gr.Textbox(
+                        label="結束日期",
+                        value=datetime.now().strftime("%Y-%m-%d"),
+                        placeholder="YYYY-MM-DD"
                     )
                     
+                    gr.Markdown("#### 震級範圍")
                     with gr.Row():
-                        epi_lon = gr.Number(
-                            label="震央經度",
-                            value=121.0,
-                            precision=4
-                        )
-                        epi_lat = gr.Number(
-                            label="震央緯度",
-                            value=24.0,
-                            precision=4
-                        )
+                        min_mag = gr.Number(label="最小震級", value=4.0)
+                        max_mag = gr.Number(label="最大震級", value=10.0)
                     
-                    generate_map_btn = gr.Button("生成觸發地圖", variant="primary")
-                    
-                with gr.Column():
-                    map_output = gr.Image(
-                        label="TSMIP 觸發地圖",
-                        type="filepath"
-                    )
-                    map_stats = gr.Textbox(
-                        label="統計資訊",
-                        lines=6,
-                        interactive=False
-                    )
-            
-            def generate_trigger_map(rep_file_path, station_file_path, epicenter_lon, epicenter_lat):
-                """Generate TSMIP trigger map using matplotlib"""
-                if not rep_file_path or not station_file_path:
-                    return None, "錯誤：請上傳報告檔案和測站檔案"
+                    gr.Markdown("#### 深度範圍（公里）")
+                    with gr.Row():
+                        min_depth = gr.Number(label="最小深度", value=0)
+                        max_depth = gr.Number(label="最大深度", value=700)
                 
-                try:
-                    import matplotlib
-                    matplotlib.rcParams['font.sans-serif'] = ['DejaVu Sans', 'Arial Unicode MS', 'Microsoft YaHei', 'SimHei']
-                    matplotlib.rcParams['axes.unicode_minus'] = False
+                with gr.Column():
+                    gr.Markdown("#### 地理範圍（臺灣及周邊）")
+                    with gr.Row():
+                        min_lat = gr.Number(label="最小緯度", value=21.0)
+                        max_lat = gr.Number(label="最大緯度", value=26.0)
+                    with gr.Row():
+                        min_lon = gr.Number(label="最小經度", value=119.0)
+                        max_lon = gr.Number(label="最大經度", value=123.0)
                     
-                    # Constants
-                    KM_PER_DEGREE = 111.0  # Approximate kilometers per degree of latitude/longitude
-                    
-                    # Read station file
-                    tsmip_all = pd.read_csv(
-                        station_file_path,
-                        sep=r'\s+',
-                        header=None,
-                        names=['Station', 'Lon', 'Lat', 'Depth']
+                    gr.Markdown(
+                        """
+                        **參考範圍**：
+                        - 臺灣本島：約 21.9°N-25.3°N, 120.0°E-122.0°E
+                        - 預設範圍包含周邊海域
+                        """
                     )
-                    
-                    # Read rep file
-                    rep_used = pd.read_csv(
-                        rep_file_path,
-                        sep=r'\s+',
-                        skiprows=5,
-                        header=None,
-                        usecols=[0, 4, 5, 6, 7, 8],
-                        names=['Station', 'Lat', 'Lon', 'PGA', 'PGV', 'PGD']
-                    )
-                    
-                    # Calculate distances
-                    def get_dist(lon, lat):
-                        return 6371 * 2 * np.arcsin(np.sqrt(
-                            np.sin(np.radians(lat - epicenter_lat)/2)**2 +
-                            np.cos(np.radians(epicenter_lat)) * np.cos(np.radians(lat)) *
-                            np.sin(np.radians(lon - epicenter_lon)/2)**2
-                        ))
-                    
-                    rep_used['Dist'] = get_dist(rep_used['Lon'], rep_used['Lat'])
-                    max_dist_km = rep_used['Dist'].max()
-                    
-                    # Calculate all station distances
-                    tsmip_all['Dist'] = get_dist(tsmip_all['Lon'], tsmip_all['Lat'])
-                    
-                    # Calculate trigger ratio
-                    stations_within_range = tsmip_all[tsmip_all['Dist'] <= max_dist_km]
-                    total_in_range = len(stations_within_range)
-                    triggered_in_range = len(rep_used[rep_used['Dist'] <= max_dist_km])
-                    
-                    if total_in_range > 0:
-                        trigger_ratio = (triggered_in_range / total_in_range) * 100
-                    else:
-                        trigger_ratio = 0
-                    
-                    # Create plot
-                    fig, ax = plt.subplots(figsize=(12, 10))
-                    
-                    # Set map bounds
-                    buffer = (max_dist_km / KM_PER_DEGREE) + 0.3
-                    ax.set_xlim(epicenter_lon - buffer, epicenter_lon + buffer)
-                    ax.set_ylim(epicenter_lat - buffer, epicenter_lat + buffer)
-                    
-                    # Plot all stations (gray triangles)
-                    ax.scatter(
-                        tsmip_all['Lon'],
-                        tsmip_all['Lat'],
-                        marker='^',
-                        s=50,
-                        c='gray',
-                        alpha=0.5,
-                        edgecolors='darkgray',
-                        linewidths=0.5,
-                        label='所有測站',
-                        zorder=2
-                    )
-                    
-                    # Plot triggered stations (red triangles)
-                    ax.scatter(
-                        rep_used['Lon'],
-                        rep_used['Lat'],
-                        marker='^',
-                        s=100,
-                        c='red',
-                        alpha=0.8,
-                        edgecolors='black',
-                        linewidths=1,
-                        label='觸發測站',
-                        zorder=3
-                    )
-                    
-                    # Plot epicenter (yellow star)
-                    ax.scatter(
-                        epicenter_lon,
-                        epicenter_lat,
-                        marker='*',
-                        s=500,
-                        c='yellow',
-                        edgecolors='red',
-                        linewidths=2,
-                        label='震央',
-                        zorder=4
-                    )
-                    
-                    # Plot trigger range circle
-                    circle = plt.Circle(
-                        (epicenter_lon, epicenter_lat),
-                        max_dist_km / KM_PER_DEGREE,  # Convert km to degrees
-                        fill=False,
-                        color='orange',
-                        linestyle='--',
-                        linewidth=2,
-                        alpha=0.7,
-                        label=f'觸發範圍 ({max_dist_km:.1f} km)',
-                        zorder=1
-                    )
-                    ax.add_patch(circle)
-                    
-                    # Add labels and title
-                    farthest_sta = rep_used.loc[rep_used['Dist'].idxmax(), 'Station']
-                    ax.set_xlabel('經度', fontsize=12)
-                    ax.set_ylabel('緯度', fontsize=12)
-                    ax.set_title(
-                        f'TSMIP 觸發地圖\n觸發比率: {trigger_ratio:.1f}% ({triggered_in_range}/{total_in_range})\n最遠測站: {farthest_sta} ({max_dist_km:.1f} km)',
-                        fontsize=14,
-                        fontweight='bold'
-                    )
-                    
-                    ax.legend(loc='upper right', fontsize=10)
-                    ax.grid(True, alpha=0.3)
-                    ax.set_aspect('equal')
-                    
-                    plt.tight_layout()
-                    
-                    # Save to temporary file
-                    with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as temp_file:
-                        temp_path = temp_file.name
-                        plt.savefig(temp_path, dpi=150, bbox_inches='tight')
-                    plt.close()
-                    
-                    # Generate statistics text
-                    stats_text = f"""半徑 {max_dist_km:.2f} km 內總站數: {total_in_range}
-半徑內觸發站數: {triggered_in_range}
-觸發比率: {trigger_ratio:.2f}%
-最遠觸發測站: {farthest_sta}
-最遠觸發距離: {max_dist_km:.2f} km
-震央位置: ({epicenter_lon:.4f}, {epicenter_lat:.4f})"""
-                    
-                    return temp_path, stats_text
-                    
-                except Exception as e:
-                    import traceback
-                    error_msg = f"錯誤：{str(e)}\n\n{traceback.format_exc()}"
-                    return None, error_msg
             
-            generate_map_btn.click(
-                fn=generate_trigger_map,
-                inputs=[rep_file, station_file, epi_lon, epi_lat],
-                outputs=[map_output, map_stats]
+            search_btn = gr.Button("🔍 搜尋地震記錄", variant="primary", size="lg")
+            
+            with gr.Row():
+                catalog_output = gr.Textbox(
+                    label="搜尋結果",
+                    lines=15,
+                    max_lines=25,
+                    interactive=False
+                )
+            
+            with gr.Row():
+                map_output = gr.Plot(label="地震分布圖")
+            
+            # 連接搜尋功能
+            search_btn.click(
+                fn=search_earthquakes,
+                inputs=[start_date, end_date, min_mag, max_mag, min_depth, max_depth,
+                       min_lat, max_lat, min_lon, max_lon],
+                outputs=catalog_output
+            )
+            
+            # 連接地圖繪製功能
+            catalog_output.change(
+                fn=create_earthquake_map,
+                inputs=catalog_output,
+                outputs=map_output
             )
         
-        with gr.Tab("🎯 互動式展示"):
+        with gr.Tab("📊 地震波形抓取"):
             gr.Markdown(
                 """
-                ### 地震預警效能互動展示
+                ### 抓取地震波形資料
                 
-                此功能展示地震預警系統的效能分析與視覺化功能。
+                使用 TW（臺灣）和 IU（全球地震網）網路的測站資料。請先在「地震目錄查詢」中找到感興趣的地震事件。
                 """
             )
             
             with gr.Row():
                 with gr.Column():
-                    gr.Markdown("""
-                    #### 模擬資料範例
-                    以下展示地震預警系統可能的分析結果：
-                    """)
+                    gr.Markdown("#### 地震事件資訊")
+                    event_time = gr.Textbox(
+                        label="地震時間",
+                        placeholder="YYYY-MM-DD HH:MM:SS 或 YYYY-MM-DDTHH:MM:SS",
+                        info="從地震目錄中複製時間"
+                    )
+                    with gr.Row():
+                        event_lat = gr.Number(label="緯度", value=23.5)
+                        event_lon = gr.Number(label="經度", value=121.0)
                     
-                    demo_stats = gr.DataFrame(
-                        value=pd.DataFrame({
-                            "項目": [
-                                "平均報告時間",
-                                "最快報告時間",
-                                "最慢報告時間",
-                                "觸發測站數",
-                                "涵蓋縣市數"
-                            ],
-                            "數值": ["8.5 秒", "3.2 秒", "15.8 秒", "45 站", "12 縣市"]
-                        }),
-                        label="效能統計摘要",
-                        interactive=False
+                    gr.Markdown("#### 資料抓取設定")
+                    networks = gr.Textbox(
+                        label="網路代碼",
+                        value="TW,IU",
+                        info="逗號分隔，例如：TW,IU"
+                    )
+                    stations = gr.Textbox(
+                        label="測站代碼（選填）",
+                        placeholder="留空表示全部測站",
+                        info="逗號分隔，例如：TPUB,YULB 或留空"
+                    )
+                    channels = gr.Textbox(
+                        label="通道代碼",
+                        value="BH*",
+                        info="例如：BH* 表示所有寬頻通道"
+                    )
+                
+                with gr.Column():
+                    gr.Markdown("#### 時間窗設定")
+                    duration_before = gr.Number(
+                        label="事件前時間（秒）",
+                        value=60,
+                        info="地震發生前抓取的時間長度"
+                    )
+                    duration_after = gr.Number(
+                        label="事件後時間（秒）",
+                        value=300,
+                        info="地震發生後抓取的時間長度"
                     )
                     
-                with gr.Column():
-                    gr.Markdown("""
-                    #### 系統特色
-                    """)
-                    gr.Markdown("""
-                    - ⚡ **快速反應**：平均 8.5 秒內發出預警
-                    - 🗺️ **廣泛覆蓋**：涵蓋全台主要縣市
-                    - 📊 **精準分析**：整合多站資料提高準確度
-                    - 🔍 **品質控制**：持續監控系統效能
-                    """)
+                    gr.Markdown(
+                        """
+                        **說明**：
+                        - **TW 網路**：臺灣地震科學中心（TEC）測站
+                        - **IU 網路**：IRIS/USGS 全球地震網測站
+                        - **通道代碼**：
+                          - BH*: 寬頻高增益（20-50 Hz）
+                          - HH*: 高頻高增益（80-250 Hz）
+                          - LH*: 長週期（1 Hz）
+                        """
+                    )
             
-            gr.Markdown("""
-            ---
-            #### 資料視覺化範例
+            fetch_btn = gr.Button("📡 抓取波形資料", variant="primary", size="lg")
             
-            地震預警系統可產生以下類型的視覺化圖表：
+            with gr.Row():
+                waveform_info = gr.Textbox(
+                    label="波形資料資訊",
+                    lines=12,
+                    max_lines=20,
+                    interactive=False
+                )
             
-            1. **報告時間分析圖**：顯示各測站的報告時間分布
-            2. **觸發地圖**：顯示觸發的測站位置與震度
-            3. **震央區域圖**：顯示震央位置與周圍測站
-            4. **縣市統計圖**：依縣市統計觸發情況
-            5. **時序分析圖**：顯示預警系統的時間演進
+            with gr.Row():
+                waveform_plot = gr.Plot(label="波形圖")
             
-            若要產生實際的分析圖表，請使用對應的 Python 腳本並提供資料檔案。
-            """)
-            
-            def generate_sample_plot():
-                """Generate a sample performance plot"""
-                import matplotlib
-                # Try to set a font that supports Chinese characters
-                try:
-                    matplotlib.rcParams['font.sans-serif'] = ['DejaVu Sans', 'Arial Unicode MS', 'Microsoft YaHei', 'SimHei']
-                    matplotlib.rcParams['axes.unicode_minus'] = False
-                except:
-                    pass  # Fall back to default if font setting fails
+            # 連接波形抓取功能
+            fetch_btn.click(
+                fn=fetch_waveforms,
+                inputs=[event_time, event_lat, event_lon, networks, stations, 
+                       channels, duration_before, duration_after],
+                outputs=[waveform_info, waveform_plot]
+            )
+        
+        with gr.Tab("ℹ️ 使用說明"):
+            gr.Markdown(
+                """
+                ## 系統說明
                 
-                fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+                ### 資料來源
                 
-                # Sample reporting time plot
-                stations = [f'STA{i:02d}' for i in range(1, 11)]
-                times = np.random.uniform(3, 15, 10)
-                colors = ['green' if t < 8 else 'orange' if t < 12 else 'red' for t in times]
+                本系統使用 IRIS（Incorporated Research Institutions for Seismology）
+                的 FDSN（International Federation of Digital Seismograph Networks）服務，
+                提供全球地震目錄和波形資料。
                 
-                ax1.barh(stations, times, color=colors, alpha=0.7)
-                ax1.set_xlabel('報告時間（秒）', fontsize=12)
-                ax1.set_ylabel('測站', fontsize=12)
-                ax1.set_title('測站報告時間分布（範例）', fontsize=14, fontweight='bold')
-                ax1.axvline(x=8.5, color='blue', linestyle='--', linewidth=2, label='平均時間')
-                ax1.legend()
-                ax1.grid(axis='x', alpha=0.3)
+                ### 使用步驟
                 
-                # Sample intensity distribution
-                intensities = ['0', '1', '2', '3', '4', '5-', '5+', '6-', '6+']
-                counts = [120, 85, 65, 45, 30, 18, 10, 5, 2]
-                colors_int = ['lightgreen', 'yellow', 'gold', 'orange', 'darkorange', 
-                             'red', 'darkred', 'purple', 'darkviolet']
+                #### 1. 查詢地震目錄
                 
-                ax2.bar(intensities, counts, color=colors_int, alpha=0.7, edgecolor='black')
-                ax2.set_xlabel('震度級距', fontsize=12)
-                ax2.set_ylabel('測站數量', fontsize=12)
-                ax2.set_title('震度分布統計（範例）', fontsize=14, fontweight='bold')
-                ax2.grid(axis='y', alpha=0.3)
+                - 在「地震目錄查詢」頁面設定搜尋條件
+                - 預設範圍涵蓋臺灣及周邊區域
+                - 點擊「搜尋地震記錄」按鈕
+                - 系統會顯示符合條件的地震列表和分布圖
                 
-                plt.tight_layout()
+                #### 2. 抓取波形資料
                 
-                # Save to temporary file with automatic cleanup
-                with tempfile.NamedTemporaryFile(delete=False, suffix='.png', dir='/tmp') as temp_file:
-                    temp_path = temp_file.name
-                    plt.savefig(temp_path, dpi=100, bbox_inches='tight')
-                plt.close()
+                - 從地震目錄中選擇感興趣的地震事件
+                - 複製地震的時間和位置資訊
+                - 在「地震波形抓取」頁面輸入事件資訊
+                - 選擇網路（TW、IU 或兩者）
+                - 可選擇特定測站或抓取所有測站資料
+                - 設定時間窗（預設為事件前 60 秒、事件後 300 秒）
+                - 點擊「抓取波形資料」按鈕
+                - 系統會顯示波形資訊和波形圖
                 
-                return temp_path
-            
-            demo_button = gr.Button("產生範例圖表", variant="primary")
-            demo_plot = gr.Image(label="地震預警效能分析圖表", type="filepath")
-            demo_button.click(fn=generate_sample_plot, outputs=demo_plot)
+                ### 網路說明
+                
+                #### TW 網路
+                
+                臺灣地震科學中心（Taiwan Earthquake Center）運營的測站網路，
+                提供臺灣地區的高品質地震觀測資料。
+                
+                #### IU 網路
+                
+                IRIS/USGS 全球地震網（Global Seismographic Network），
+                在臺灣也有部分測站，提供全球標準的地震觀測資料。
+                
+                ### 技術細節
+                
+                - **ObsPy**：Python 地震學資料處理工具
+                - **FDSN 服務**：標準化的地震資料查詢協定
+                - **時間格式**：UTC 時間
+                - **資料格式**：miniSEED（波形資料）
+                
+                ### 常見問題
+                
+                **Q: 為什麼有些時段找不到資料？**
+                
+                A: 可能的原因包括：
+                - 該時段沒有符合條件的地震
+                - 測站在該時段未運作
+                - 網路連線問題
+                - FDSN 服務暫時不可用
+                
+                **Q: 如何選擇合適的時間窗？**
+                
+                A: 建議：
+                - 近震（< 100 km）：前 30 秒、後 120 秒
+                - 區域地震（100-1000 km）：前 60 秒、後 300 秒
+                - 遠震（> 1000 km）：前 120 秒、後 600 秒
+                
+                **Q: 資料可以下載嗎？**
+                
+                A: 目前版本主要用於線上查詢和視覺化。如需下載原始資料，
+                建議使用 ObsPy 或直接從 IRIS 的 FDSN 服務下載。
+                
+                ### 相關連結
+                
+                - [IRIS DMC](https://ds.iris.edu/ds/nodes/dmc/)
+                - [ObsPy 文件](https://docs.obspy.org/)
+                - [FDSN 網路服務](https://www.fdsn.org/webservices/)
+                - [台灣地震科學中心](https://tec.earth.sinica.edu.tw/)
+                
+                ### 授權資訊
+                
+                本系統使用的地震資料來自 IRIS FDSN 服務，資料使用請遵循
+                IRIS 資料使用政策。
+                
+                ---
+                
+                **開發者**：oceanicdayi  
+                **專案**：[EEW_quality_control](https://github.com/oceanicdayi/EEW_quality_control)  
+                **版本**：2.0.0
+                """
+            )
         
         gr.Markdown(
             """
@@ -635,12 +628,12 @@ def create_interface():
             
             ### 注意事項
             
-            這是地震預警品質控制工具的網頁介面。原始腳本是設計為使用特定資料檔案從命令列執行。
-            本介面提供說明文件、環境測試功能以及互動式展示範例。
+            - 本系統需要網路連線以存取 IRIS FDSN 服務
+            - 資料查詢可能需要幾秒到幾十秒，請耐心等候
+            - 大量資料查詢可能較慢，建議適當限制搜尋範圍
+            - 所有時間均為 UTC 時間（臺灣時間 = UTC + 8）
             
-            若要使用這些工具的完整功能，請複製儲存庫並使用您的地震預警資料檔案在本地執行腳本。
-            
-            **儲存庫：**[github.com/oceanicdayi/EEW_quality_control](https://github.com/oceanicdayi/EEW_quality_control)
+            **系統狀態**：🟢 正常運作
             """
         )
     

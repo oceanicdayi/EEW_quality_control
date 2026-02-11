@@ -1,6 +1,4 @@
-pandas>=2.0.0
-numpy>=1.24.0
-matplotlib>=3.7.0
 obspy>=1.4.0
-pygmt>=0.10.0
 gradio>=5.0.0,<6.0.0
+matplotlib>=3.7.0
+numpy>=1.24.0

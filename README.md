@@ -1,6 +1,6 @@
 ---
-title: 地震預警品質控制系統 EEW Quality Control
-emoji: 🌍
+title: 臺灣地震資料查詢系統 Taiwan Earthquake Data Fetcher
+emoji: 🌏
 colorFrom: blue
 colorTo: green
 sdk: gradio
@@ -10,61 +10,115 @@ pinned: false
 license: mit
 ---
 
-# 地震預警品質控制系統 (EEW Quality Control)
+# 🌏 臺灣地震資料查詢系統
 
-地震預警（EEW）品質控制工具，用於分析與視覺化地震資料。
+使用 ObsPy 從 IRIS FDSN 抓取臺灣地震記錄和地震波形資料
 
-Earthquake Early Warning (EEW) Quality Control tools for analyzing and visualizing seismic data.
-
-## 關於 About
-
-本儲存庫包含用於分析地震預警（EEW）系統資料的 Python 腳本，包括：
-
-This repository contains Python scripts for analyzing Earthquake Early Warning (EEW) system data, including:
-
-- 報告處理與轉換 (Report processing and conversion)
-- 資料視覺化與地圖繪製 (Data visualization and mapping)
-- 品質分析與報告時間研究 (Quality analysis and reporting time studies)
-- 縣市分析 (County-based analysis)
+Taiwan Earthquake Data Fetcher - Fetch Taiwan earthquake records and seismic waveforms from IRIS FDSN using ObsPy
 
 ## 功能特色 Features
 
-- 📊 **報告處理 Report Processing**：將地震預警報告轉換為文字格式 (Convert EEW reports to text format)
-- 🗺️ **資料視覺化 Data Visualization**：繪製地震預警報告摘要與地圖 (Plot EEW report summaries and maps)
-- ⏱️ **品質分析 Quality Analysis**：分析報告時間與觸發地圖 (Analyze reporting times and trigger maps)
-- 🏛️ **縣市分析 County Analysis**：依縣市分析地震預警資料 (Analyze EEW data by county)
+- 🔍 **地震目錄查詢**：從 IRIS FDSN 搜尋臺灣地區的地震記錄
+- 📊 **波形資料抓取**：下載地震波形資料（支援 TW 和 IU 網路）
+- 🗺️ **資料視覺化**：繪製地震分布圖和波形圖
+- ⚙️ **彈性搜尋條件**：可自訂時間範圍、震級、深度和地理區域
+- 🌐 **網頁介面**：使用 Gradio 提供友善的互動式介面
 
-## 腳本 Scripts
+### Earthquake Catalog Search
+Query earthquake records from the Taiwan region via IRIS FDSN services
 
-1. `01_rep2txt_pfile.py`: 將報告檔案轉換為文字格式 (Convert report files to text format)
-2. `02_plot_report_pfile.py`: 繪製地震預警報告摘要 (Plot EEW report summaries)
-3. `03_plot_ez_maps.py`: 繪製震央區域地圖 (Plot epicenter zone maps)
-4. `04_plot_tsmip_trigger_map.py`: 繪製 TSMIP 觸發地圖 (Plot TSMIP trigger maps)
-5. `05_plot_conunty.py`: 依縣市分析資料 (Analyze data by county)
-6. `06_plot_reporting_time_pfile.py`: 繪製報告時間分析 (Plot reporting time analysis)
+### Waveform Data Fetching
+Download seismic waveforms using TW (Taiwan) and IU (Global Seismographic Network) networks
+
+### Data Visualization
+Plot earthquake distribution maps and seismogram visualizations
+
+### Flexible Search Criteria
+Customize time range, magnitude, depth, and geographic region
+
+### Web Interface
+User-friendly interactive interface powered by Gradio
 
 ## 使用方式 Usage
+
+### 線上使用 Online Access
 
 訪問 [Hugging Face Space](https://huggingface.co/spaces/cwbdayi/EEW_quality_control) 使用網頁介面。
 
 Visit the [Hugging Face Space](https://huggingface.co/spaces/cwbdayi/EEW_quality_control) for the web interface.
 
-命令列使用範例 (For command-line usage):
+### 本地執行 Local Installation
 
 ```bash
-python 02_plot_report_pfile.py <pfile> --kind all
+# 安裝相依套件
+pip install -r requirements.txt
+
+# 執行應用程式
+python app.py
 ```
+
+## 功能說明 Features Description
+
+### 1. 地震目錄查詢 Earthquake Catalog Query
+
+- 設定時間範圍、震級、深度和地理區域
+- 搜尋符合條件的地震記錄
+- 顯示地震詳細資訊（時間、震級、位置、深度）
+- 自動繪製地震分布圖和震級-深度關係圖
+
+Set search criteria including time range, magnitude, depth, and geographic region to query earthquake records with detailed information and automatic visualization.
+
+### 2. 地震波形抓取 Seismic Waveform Fetching
+
+- 支援 TW（臺灣地震科學中心）和 IU（全球地震網）網路
+- 可選擇特定測站或抓取所有測站資料
+- 可自訂時間窗（事件前後的時間長度）
+- 支援多種通道類型（BH*, HH*, LH* 等）
+- 自動繪製波形圖
+
+Supports TW (Taiwan Earthquake Center) and IU (Global Seismographic Network) networks with customizable station selection and time windows.
+
+### 3. 資料視覺化 Data Visualization
+
+- 地震分布地圖（經緯度、震級、深度）
+- 震級-深度關係圖
+- 波形時間序列圖
+- 自動標記地震發生時間
+
+Automatic generation of earthquake distribution maps, magnitude-depth plots, and waveform time series.
+
+## 技術架構 Technical Stack
+
+- **ObsPy**：Python 地震學資料處理工具
+- **IRIS FDSN**：國際地震資料服務
+- **Gradio**：互動式網頁介面框架
+- **Matplotlib**：資料視覺化
+
+## 資料來源 Data Source
+
+本系統使用 IRIS（Incorporated Research Institutions for Seismology）的 FDSN（International Federation of Digital Seismograph Networks）服務，提供全球地震目錄和波形資料。
+
+This system uses IRIS FDSN services to provide global earthquake catalogs and waveform data.
 
 ## 相依套件 Dependencies
 
 - Python 3.7+
-- pandas
-- numpy
-- matplotlib
-- obspy
-- pygmt
-- gradio (for web interface)
+- obspy >= 1.4.0
+- gradio >= 5.0.0
+- matplotlib >= 3.7.0
+- numpy >= 1.24.0
 
 ## 授權 License
 
-MIT
+MIT License
+
+## 作者 Author
+
+oceanicdayi
+
+## 相關連結 Links
+
+- [IRIS DMC](https://ds.iris.edu/ds/nodes/dmc/)
+- [ObsPy Documentation](https://docs.obspy.org/)
+- [FDSN Web Services](https://www.fdsn.org/webservices/)
+- [Taiwan Earthquake Center](https://tec.earth.sinica.edu.tw/)
