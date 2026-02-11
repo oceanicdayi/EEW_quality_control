@@ -52,3 +52,4 @@ Thumbs.db
 *.tmp
 *.bak
 *.log
+!hf_deploy_logs/*.txt
