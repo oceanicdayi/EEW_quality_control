@@ -11,15 +11,23 @@ from datetime import datetime, timedelta
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from obspy import UTCDateTime
-from obspy.clients.fdsn import Client
 import numpy as np
+
+try:
+    from obspy import UTCDateTime
+    from obspy.clients.fdsn import Client
+    OBSPY_AVAILABLE = True
+except ImportError as e:
+    OBSPY_AVAILABLE = False
+    _obspy_import_error = str(e)
 
 # IRIS FDSN 客戶端（延遲初始化）
 _client = None
 
 def get_client():
     """獲取或初始化 IRIS FDSN 客戶端"""
+    if not OBSPY_AVAILABLE:
+        raise Exception(f"ObsPy 未安裝或無法匯入: {_obspy_import_error}\n\n請確認已安裝所有系統相依套件。")
     global _client
     if _client is None:
         try:
