@@ -26,13 +26,20 @@ jobs:
           # 1. 確保 LFS 已初始化 (如果你有大型檔案)
           git lfs install
           
-          # 2. 設定遠端 URL (包含 Token)
-          # 注意：cwbdayi 是你的用戶名，EEW_quality_control 是 Space 名稱
-          REMOTE_URL="https://cwbdayi:$HF_TOKEN@huggingface.co/spaces/cwbdayi/EEW_quality_control"
+          # 2. 使用 git credential store 安全傳遞 Token，避免 Token 洩漏到日誌或程序列表中
+          CREDENTIALS_FILE=$(mktemp)
+          trap 'rm -f "$CREDENTIALS_FILE"' EXIT
+          chmod 600 "$CREDENTIALS_FILE"
+          echo "https://cwbdayi:${HF_TOKEN}@huggingface.co" > "$CREDENTIALS_FILE"
+          git config credential.helper "store --file=$CREDENTIALS_FILE"
+          
+          HF_REPO_URL="https://huggingface.co/spaces/cwbdayi/EEW_quality_control"
+          git remote add hf "$HF_REPO_URL" 2>/dev/null || \
+            git remote set-url hf "$HF_REPO_URL"
           
           # 3. 強制推送
           # 使用 --force 可以解決 (stale info) 或 (fetch first) 的衝突問題
-          git push --force $REMOTE_URL main
+          git push --force hf main
 
       - name: Wait for HF Space deployment
         env:
