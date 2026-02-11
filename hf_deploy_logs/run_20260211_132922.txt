@@ -1,0 +1,10 @@
+data: {"data":"===== Application Startup at 2026-02-11 13:28:49 =====\n","timestamp":"2026-02-11T13:28:49Z"}
+
+data: {"data":"/app/app.py:364: DeprecationWarning: The 'theme' parameter in the Blocks constructor will be removed in Gradio 6.0. You will need to pass 'theme' to Blocks.launch() instead.","timestamp":"2026-02-11T13:29:17.222Z"}
+
+data: {"data":"  with gr.Blocks(title=\"臺灣地震資料查詢系統\", theme=gr.themes.Soft()) as demo:","timestamp":"2026-02-11T13:29:17.222Z"}
+
+data: {"data":"* Running on local URL:  http://0.0.0.0:7860, with SSR ⚡ (experimental, to disable set `ssr_mode=False` in `launch()`)","timestamp":"2026-02-11T13:29:17.814Z"}
+
+data: {"data":"* To create a public link, set `share=True` in `launch()`.","timestamp":"2026-02-11T13:29:18.198Z"}
+

@@ -1,0 +1,62 @@
+data: {"data":"===== Build Queued at 2026-02-11 13:28:41 / Commit SHA: c6fa649 =====\n","timestamp":"2026-02-11T13:28:41Z"}
+
+data: {"data":"--> FROM docker.io/library/python:3.13@sha256:498320f325ad70645e99ff676347987ca9117728784b8273fb6d25cc735ad9c0","timestamp":"2026-02-11T13:28:45.791Z"}
+
+data: {"data":"DONE 0.0s\n","timestamp":"2026-02-11T13:28:45.791Z"}
+
+data: {"data":"--> COPY --from=root / /","timestamp":"2026-02-11T13:28:46.013Z"}
+
+data: {"data":"CACHED\n","timestamp":"2026-02-11T13:28:46.013Z"}
+
+data: {"data":"--> RUN apt-get update && apt-get install -y \tgit \tgit-lfs \tffmpeg \tlibsm6 \tlibxext6 \tcmake \trsync \tlibgl1 \t&& rm -rf /var/lib/apt/lists/* \t&& git lfs install","timestamp":"2026-02-11T13:28:46.013Z"}
+
+data: {"data":"CACHED\n","timestamp":"2026-02-11T13:28:46.013Z"}
+
+data: {"data":"--> RUN --mount=target=/tmp/requirements.txt,source=requirements.txt     pip install --no-cache-dir -r /tmp/requirements.txt","timestamp":"2026-02-11T13:28:46.013Z"}
+
+data: {"data":"CACHED\n","timestamp":"2026-02-11T13:28:46.013Z"}
+
+data: {"data":"--> RUN --mount=target=/tmp/packages.txt,source=packages.txt \tapt-get update && \txargs -r -a /tmp/packages.txt apt-get install -y && \tapt-get install -y curl && \tcurl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \tapt-get install -y nodejs && \trm -rf /var/lib/apt/lists/* && apt-get clean","timestamp":"2026-02-11T13:28:46.013Z"}
+
+data: {"data":"CACHED\n","timestamp":"2026-02-11T13:28:46.013Z"}
+
+data: {"data":"--> RUN pip install --no-cache-dir pip -U &&     pip install --no-cache-dir     datasets     \"huggingface-hub>=0.30\" \"hf-transfer>=0.1.4\" \"protobuf<4\" \"click<8.1\"","timestamp":"2026-02-11T13:28:46.013Z"}
+
+data: {"data":"CACHED\n","timestamp":"2026-02-11T13:28:46.013Z"}
+
+data: {"data":"--> RUN pip install --no-cache-dir     gradio[oauth,mcp]==5.50.0     \"uvicorn>=0.14.0\" \"websockets>=10.4\"     spaces","timestamp":"2026-02-11T13:28:46.013Z"}
+
+data: {"data":"CACHED\n","timestamp":"2026-02-11T13:28:46.013Z"}
+
+data: {"data":"--> WORKDIR /app","timestamp":"2026-02-11T13:28:46.013Z"}
+
+data: {"data":"CACHED\n","timestamp":"2026-02-11T13:28:46.013Z"}
+
+data: {"data":"--> RUN mkdir -p /pipfreeze","timestamp":"2026-02-11T13:28:46.013Z"}
+
+data: {"data":"CACHED\n","timestamp":"2026-02-11T13:28:46.013Z"}
+
+data: {"data":"--> RUN pip freeze > /pipfreeze/freeze.txt","timestamp":"2026-02-11T13:28:46.013Z"}
+
+data: {"data":"CACHED\n","timestamp":"2026-02-11T13:28:46.013Z"}
+
+data: {"data":"--> RUN mkdir -p /home/user && ( [ -e /home/user/app ] || ln -s /app/ /home/user/app ) || true","timestamp":"2026-02-11T13:28:46.013Z"}
+
+data: {"data":"CACHED\n","timestamp":"2026-02-11T13:28:46.013Z"}
+
+data: {"data":"--> COPY --link ./ /app","timestamp":"2026-02-11T13:28:46.013Z"}
+
+data: {"data":"DONE 0.0s\n","timestamp":"2026-02-11T13:28:46.013Z"}
+
+data: {"data":"--> COPY --from=pipfreeze --link /pipfreeze/ /pipfreeze/","timestamp":"2026-02-11T13:28:46.013Z"}
+
+data: {"data":"DONE 0.0s\n","timestamp":"2026-02-11T13:28:46.013Z"}
+
+data: {"data":"--> Pushing image","timestamp":"2026-02-11T13:28:46.013Z"}
+
+data: {"data":"DONE 0.7s\n","timestamp":"2026-02-11T13:28:46.655Z"}
+
+data: {"data":"--> Exporting cache","timestamp":"2026-02-11T13:28:46.655Z"}
+
+data: {"data":"DONE 0.4s\n","timestamp":"2026-02-11T13:28:46.934Z"}
+
