@@ -20,10 +20,14 @@ def main() -> int:
     # PyGMT requires GMT system library, make it optional
     try:
         import pygmt  # noqa: F401
-        print("✓ pygmt available")
     except Exception as e:
-        print(f"⚠ pygmt not fully available (requires GMT system library): {e}")
-        print("  Note: Some plotting scripts may not work without GMT installed")
+        # Catch GMTCLibNotFoundError and other import issues
+        if "GMT" in str(type(e).__name__) or "libgmt" in str(e):
+            print(f"⚠ pygmt not fully available (requires GMT system library): {e}")
+            print("  Note: Some plotting scripts may not work without GMT installed")
+        else:
+            # Re-raise unexpected exceptions
+            raise
 
     # Local module import
     import eewrep_function  # noqa: F401
