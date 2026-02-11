@@ -304,6 +304,216 @@ def create_interface():
                 """
             )
         
+        with gr.Tab("🗺️ TSMIP 觸發地圖"):
+            gr.Markdown(
+                """
+                ### TSMIP 觸發地圖生成器
+                
+                此功能可以繪製 TSMIP 測站觸發地圖，顯示：
+                - 所有 TSMIP 測站位置（灰色三角形）
+                - 已觸發的測站（紅色三角形）
+                - 震央位置（黃色星號）
+                - 最遠觸發距離範圍圓圈
+                - 觸發比率統計
+                """
+            )
+            
+            with gr.Row():
+                with gr.Column():
+                    rep_file = gr.File(
+                        label="上傳報告檔案 (.rep)",
+                        file_types=[".rep"],
+                        type="filepath"
+                    )
+                    station_file = gr.File(
+                        label="上傳測站檔案 (station.txt)",
+                        file_types=[".txt"],
+                        type="filepath"
+                    )
+                    
+                    with gr.Row():
+                        epi_lon = gr.Number(
+                            label="震央經度",
+                            value=121.0,
+                            precision=4
+                        )
+                        epi_lat = gr.Number(
+                            label="震央緯度",
+                            value=24.0,
+                            precision=4
+                        )
+                    
+                    generate_map_btn = gr.Button("生成觸發地圖", variant="primary")
+                    
+                with gr.Column():
+                    map_output = gr.Image(
+                        label="TSMIP 觸發地圖",
+                        type="filepath"
+                    )
+                    map_stats = gr.Textbox(
+                        label="統計資訊",
+                        lines=6,
+                        interactive=False
+                    )
+            
+            def generate_trigger_map(rep_file_path, station_file_path, epicenter_lon, epicenter_lat):
+                """Generate TSMIP trigger map using matplotlib"""
+                if not rep_file_path or not station_file_path:
+                    return None, "錯誤：請上傳報告檔案和測站檔案"
+                
+                try:
+                    import matplotlib
+                    matplotlib.rcParams['font.sans-serif'] = ['DejaVu Sans', 'Arial Unicode MS', 'Microsoft YaHei', 'SimHei']
+                    matplotlib.rcParams['axes.unicode_minus'] = False
+                    
+                    # Read station file
+                    tsmip_all = pd.read_csv(
+                        station_file_path,
+                        sep=r'\s+',
+                        header=None,
+                        names=['Station', 'Lon', 'Lat', 'Depth']
+                    )
+                    
+                    # Read rep file
+                    rep_used = pd.read_csv(
+                        rep_file_path,
+                        sep=r'\s+',
+                        skiprows=5,
+                        header=None,
+                        usecols=[0, 4, 5, 6, 7, 8],
+                        names=['Station', 'Lat', 'Lon', 'PGA', 'PGV', 'PGD']
+                    )
+                    
+                    # Calculate distances
+                    def get_dist(lon, lat):
+                        return 6371 * 2 * np.arcsin(np.sqrt(
+                            np.sin(np.radians(lat - epicenter_lat)/2)**2 +
+                            np.cos(np.radians(epicenter_lat)) * np.cos(np.radians(lat)) *
+                            np.sin(np.radians(lon - epicenter_lon)/2)**2
+                        ))
+                    
+                    rep_used['Dist'] = get_dist(rep_used['Lon'], rep_used['Lat'])
+                    max_dist_km = rep_used['Dist'].max()
+                    
+                    # Calculate all station distances
+                    tsmip_all['Dist'] = get_dist(tsmip_all['Lon'], tsmip_all['Lat'])
+                    
+                    # Calculate trigger ratio
+                    stations_within_range = tsmip_all[tsmip_all['Dist'] <= max_dist_km]
+                    total_in_range = len(stations_within_range)
+                    triggered_in_range = len(rep_used[rep_used['Dist'] <= max_dist_km])
+                    
+                    if total_in_range > 0:
+                        trigger_ratio = (triggered_in_range / total_in_range) * 100
+                    else:
+                        trigger_ratio = 0
+                    
+                    # Create plot
+                    fig, ax = plt.subplots(figsize=(12, 10))
+                    
+                    # Set map bounds
+                    buffer = (max_dist_km / 111) + 0.3
+                    ax.set_xlim(epicenter_lon - buffer, epicenter_lon + buffer)
+                    ax.set_ylim(epicenter_lat - buffer, epicenter_lat + buffer)
+                    
+                    # Plot all stations (gray triangles)
+                    ax.scatter(
+                        tsmip_all['Lon'],
+                        tsmip_all['Lat'],
+                        marker='^',
+                        s=50,
+                        c='gray',
+                        alpha=0.5,
+                        edgecolors='darkgray',
+                        linewidths=0.5,
+                        label='所有測站',
+                        zorder=2
+                    )
+                    
+                    # Plot triggered stations (red triangles)
+                    ax.scatter(
+                        rep_used['Lon'],
+                        rep_used['Lat'],
+                        marker='^',
+                        s=100,
+                        c='red',
+                        alpha=0.8,
+                        edgecolors='black',
+                        linewidths=1,
+                        label='觸發測站',
+                        zorder=3
+                    )
+                    
+                    # Plot epicenter (yellow star)
+                    ax.scatter(
+                        epicenter_lon,
+                        epicenter_lat,
+                        marker='*',
+                        s=500,
+                        c='yellow',
+                        edgecolors='red',
+                        linewidths=2,
+                        label='震央',
+                        zorder=4
+                    )
+                    
+                    # Plot trigger range circle
+                    circle = plt.Circle(
+                        (epicenter_lon, epicenter_lat),
+                        max_dist_km / 111,  # Convert km to degrees
+                        fill=False,
+                        color='orange',
+                        linestyle='--',
+                        linewidth=2,
+                        alpha=0.7,
+                        label=f'觸發範圍 ({max_dist_km:.1f} km)',
+                        zorder=1
+                    )
+                    ax.add_patch(circle)
+                    
+                    # Add labels and title
+                    farthest_sta = rep_used.loc[rep_used['Dist'].idxmax(), 'Station']
+                    ax.set_xlabel('經度', fontsize=12)
+                    ax.set_ylabel('緯度', fontsize=12)
+                    ax.set_title(
+                        f'TSMIP 觸發地圖\\n觸發比率: {trigger_ratio:.1f}% ({triggered_in_range}/{total_in_range})\\n最遠測站: {farthest_sta} ({max_dist_km:.1f} km)',
+                        fontsize=14,
+                        fontweight='bold'
+                    )
+                    
+                    ax.legend(loc='upper right', fontsize=10)
+                    ax.grid(True, alpha=0.3)
+                    ax.set_aspect('equal')
+                    
+                    plt.tight_layout()
+                    
+                    # Save to temporary file
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.png', dir='/tmp') as temp_file:
+                        temp_path = temp_file.name
+                        plt.savefig(temp_path, dpi=150, bbox_inches='tight')
+                    plt.close()
+                    
+                    # Generate statistics text
+                    stats_text = f"""半徑 {max_dist_km:.2f} km 內總站數: {total_in_range}
+半徑內觸發站數: {triggered_in_range}
+觸發比率: {trigger_ratio:.2f}%
+最遠觸發測站: {farthest_sta}
+最遠觸發距離: {max_dist_km:.2f} km
+震央位置: ({epicenter_lon:.4f}, {epicenter_lat:.4f})"""
+                    
+                    return temp_path, stats_text
+                    
+                except Exception as e:
+                    import traceback
+                    error_msg = f"錯誤：{str(e)}\\n\\n{traceback.format_exc()}"
+                    return None, error_msg
+            
+            generate_map_btn.click(
+                fn=generate_trigger_map,
+                inputs=[rep_file, station_file, epi_lon, epi_lat],
+                outputs=[map_output, map_stats]
+            )
+        
         with gr.Tab("🎯 互動式展示"):
             gr.Markdown(
                 """
