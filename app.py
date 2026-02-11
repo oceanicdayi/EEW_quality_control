@@ -15,8 +15,18 @@ from obspy import UTCDateTime
 from obspy.clients.fdsn import Client
 import numpy as np
 
-# 初始化 IRIS FDSN 客戶端
-client = Client("IRIS")
+# IRIS FDSN 客戶端（延遲初始化）
+_client = None
+
+def get_client():
+    """獲取或初始化 IRIS FDSN 客戶端"""
+    global _client
+    if _client is None:
+        try:
+            _client = Client("IRIS")
+        except Exception as e:
+            raise Exception(f"無法連接到 IRIS FDSN 服務: {str(e)}\n\n請檢查網路連線或稍後再試。")
+    return _client
 
 def search_earthquakes(start_date, end_date, min_magnitude, max_magnitude, 
                       min_depth, max_depth, min_latitude, max_latitude, 
@@ -42,6 +52,9 @@ def search_earthquakes(start_date, end_date, min_magnitude, max_magnitude,
     str : 搜尋結果文字
     """
     try:
+        # 獲取客戶端
+        client = get_client()
+        
         # 轉換日期格式
         starttime = UTCDateTime(start_date)
         endtime = UTCDateTime(end_date)
@@ -85,7 +98,7 @@ def search_earthquakes(start_date, end_date, min_magnitude, max_magnitude,
         return result
         
     except Exception as e:
-        return f"錯誤: {str(e)}\n\n請檢查搜尋條件是否正確。"
+        return f"錯誤: {str(e)}\n\n請檢查搜尋條件是否正確，或確認網路連線正常。"
 
 
 def fetch_waveforms(event_time, latitude, longitude, networks, stations, 
@@ -114,6 +127,9 @@ def fetch_waveforms(event_time, latitude, longitude, networks, stations,
     fig : matplotlib figure
     """
     try:
+        # 獲取客戶端
+        client = get_client()
+        
         # 轉換時間
         event_time_utc = UTCDateTime(event_time)
         starttime = event_time_utc - duration_before
