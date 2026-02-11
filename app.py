@@ -13,6 +13,8 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 
+_obspy_import_error = None
+
 try:
     from obspy import UTCDateTime
     from obspy.clients.fdsn import Client
