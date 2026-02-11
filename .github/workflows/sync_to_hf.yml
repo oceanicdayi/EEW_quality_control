@@ -20,4 +20,4 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           # 將你的程式碼推送到 Hugging Face Spaces
-          git push --force https://cwbdayi:$HF_TOKEN@huggingface.co/spaces/cwbdayi/EEW_quality_control main:main
+          git push --force-with-lease https://cwbdayi:$HF_TOKEN@huggingface.co/spaces/cwbdayi/EEW_quality_control main:main
