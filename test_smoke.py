@@ -26,7 +26,9 @@ def main() -> int:
         print("  Note: Some plotting scripts may not work without pygmt installed")
     except Exception as e:
         # Catch GMTCLibNotFoundError from pygmt (system library not found)
-        # We can't import it directly because pygmt import fails before we can access it
+        # We can't import pygmt.exceptions directly because the pygmt import fails
+        # before we can access it, so we check the exception type name instead.
+        # This is safe because we re-raise any unexpected exceptions below.
         if type(e).__name__ == "GMTCLibNotFoundError":
             print(f"⚠ pygmt installed but GMT system library not available: {e}")
             print("  Note: Some plotting scripts may not work without GMT installed")
