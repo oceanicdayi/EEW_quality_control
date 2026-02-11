@@ -20,10 +20,15 @@ def main() -> int:
     # PyGMT requires GMT system library, make it optional
     try:
         import pygmt  # noqa: F401
+    except ImportError as e:
+        # Module not found or import failed
+        print(f"⚠ pygmt not available: {e}")
+        print("  Note: Some plotting scripts may not work without pygmt installed")
     except Exception as e:
-        # Catch GMTCLibNotFoundError and other import issues
-        if "GMT" in str(type(e).__name__) or "libgmt" in str(e):
-            print(f"⚠ pygmt not fully available (requires GMT system library): {e}")
+        # Catch GMTCLibNotFoundError from pygmt (system library not found)
+        # We can't import it directly because pygmt import fails before we can access it
+        if type(e).__name__ == "GMTCLibNotFoundError":
+            print(f"⚠ pygmt installed but GMT system library not available: {e}")
             print("  Note: Some plotting scripts may not work without GMT installed")
         else:
             # Re-raise unexpected exceptions
