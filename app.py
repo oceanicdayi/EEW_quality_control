@@ -13,9 +13,9 @@ import tempfile
 import shutil
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend for server
+import matplotlib.pyplot as plt
 
 # Ensure the current directory is in the path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -363,6 +363,14 @@ def create_interface():
             
             def generate_sample_plot():
                 """Generate a sample performance plot"""
+                import matplotlib
+                # Try to set a font that supports Chinese characters
+                try:
+                    matplotlib.rcParams['font.sans-serif'] = ['DejaVu Sans', 'Arial Unicode MS', 'Microsoft YaHei', 'SimHei']
+                    matplotlib.rcParams['axes.unicode_minus'] = False
+                except:
+                    pass  # Fall back to default if font setting fails
+                
                 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
                 
                 # Sample reporting time plot
@@ -392,12 +400,13 @@ def create_interface():
                 
                 plt.tight_layout()
                 
-                # Save to temporary file
-                temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
-                plt.savefig(temp_file.name, dpi=100, bbox_inches='tight')
+                # Save to temporary file with automatic cleanup
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.png', dir='/tmp') as temp_file:
+                    temp_path = temp_file.name
+                    plt.savefig(temp_path, dpi=100, bbox_inches='tight')
                 plt.close()
                 
-                return temp_file.name
+                return temp_path
             
             demo_button = gr.Button("產生範例圖表", variant="primary")
             demo_plot = gr.Image(label="地震預警效能分析圖表", type="filepath")
