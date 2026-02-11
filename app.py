@@ -11,6 +11,11 @@ import subprocess
 from pathlib import Path
 import tempfile
 import shutil
+import pandas as pd
+import numpy as np
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend for server
+import matplotlib.pyplot as plt
 
 # Ensure the current directory is in the path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -19,77 +24,77 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 def create_interface():
     """Create the Gradio interface for EEW Quality Control"""
     
-    with gr.Blocks(title="EEW Quality Control") as demo:
+    with gr.Blocks(title="地震預警品質控制系統") as demo:
         gr.Markdown(
             """
-            # Earthquake Early Warning (EEW) Quality Control
+            # 地震預警（EEW）品質控制系統
             
-            This application provides tools for analyzing and visualizing Earthquake Early Warning (EEW) data.
+            本應用程式提供地震預警（EEW）資料分析與視覺化工具。
             
-            ## Features:
-            - **Report Processing**: Convert EEW reports to text format
-            - **Data Visualization**: Plot EEW report summaries and maps
-            - **Quality Analysis**: Analyze reporting times and trigger maps
-            - **County Analysis**: Analyze EEW data by county
+            ## 功能特色：
+            - **報告處理**：將地震預警報告轉換為文字格式
+            - **資料視覺化**：繪製地震預警報告摘要與地圖
+            - **品質分析**：分析報告時間與觸發地圖
+            - **縣市分析**：依縣市分析地震預警資料
             
-            ## Available Scripts:
+            ## 可用功能：
             """
         )
         
-        with gr.Tab("📊 About"):
+        with gr.Tab("📊 關於"):
             gr.Markdown(
                 """
-                ### EEW Quality Control Tools
+                ### 地震預警品質控制工具
                 
-                This repository contains Python scripts for analyzing Earthquake Early Warning (EEW) system data:
+                本儲存庫包含用於分析地震預警（EEW）系統資料的 Python 腳本：
                 
-                1. **01_rep2txt_pfile.py**: Convert report files to text format using P-file input
-                2. **02_plot_report_pfile.py**: Plot EEW report summaries from P-file data
-                3. **03_plot_ez_maps.py**: Plot EZ (epicenter zone) maps
-                4. **04_plot_tsmip_trigger_map.py**: Plot TSMIP trigger maps
-                5. **05_plot_conunty.py**: Analyze data by county
-                6. **06_plot_reporting_time_pfile.py**: Plot reporting time analysis
+                1. **01_rep2txt_pfile.py**：使用 P 檔輸入將報告檔案轉換為文字格式
+                2. **02_plot_report_pfile.py**：從 P 檔資料繪製地震預警報告摘要
+                3. **03_plot_ez_maps.py**：繪製震央區域地圖
+                4. **04_plot_tsmip_trigger_map.py**：繪製 TSMIP 觸發地圖
+                5. **05_plot_conunty.py**：依縣市分析資料
+                6. **06_plot_reporting_time_pfile.py**：繪製報告時間分析
                 
-                ### Data Requirements
+                ### 資料需求
                 
-                The scripts expect the following data files:
-                - P-files in the `192/` directory (with .P20 extension)
-                - Station data (`station.txt`)
-                - County list (`county_list.txt`)
-                - City boundary data (`city_2016.gmt`)
-                - EEW report files (`.rep` files)
-                - XML files with earthquake data
+                腳本需要以下資料檔案：
+                - `192/` 目錄中的 P 檔（副檔名為 .P20）
+                - 測站資料（`station.txt`）
+                - 縣市清單（`county_list.txt`）
+                - 縣市邊界資料（`city_2016.gmt`）
+                - 地震預警報告檔案（`.rep` 檔案）
+                - 包含地震資料的 XML 檔案
                 
-                ### Usage
+                ### 使用方式
                 
-                To use these tools, you need to:
-                1. Prepare your data files in the required format
-                2. Place P-files in the `192/` directory
-                3. Run the appropriate script with the necessary arguments
+                使用這些工具時，您需要：
+                1. 準備所需格式的資料檔案
+                2. 將 P 檔放置在 `192/` 目錄中
+                3. 使用必要的參數執行適當的腳本
                 
-                ### Command-line Usage Examples
+                ### 命令列使用範例
                 
                 ```bash
-                # Convert report files to text
+                # 將報告檔案轉換為文字
                 python 01_rep2txt_pfile.py
                 
-                # Plot report summary
+                # 繪製報告摘要
                 python 02_plot_report_pfile.py <pfile> --kind all
                 
-                # Plot EZ maps
+                # 繪製震央區域地圖
                 python 03_plot_ez_maps.py <pfile> --epi-lon 120.5 --epi-lat 23.5
                 
-                # Plot trigger map
+                # 繪製觸發地圖
                 python 04_plot_tsmip_trigger_map.py <pfile>
                 
-                # Plot county analysis
+                # 繪製縣市分析
                 python 05_plot_conunty.py <pfile>
                 
-                # Plot reporting time
+                # 繪製報告時間
                 python 06_plot_reporting_time_pfile.py <pfile>
                 ```
                 
-                ### Dependencies
+                ### 相依套件
                 
                 - Python 3.7+
                 - pandas
@@ -98,23 +103,23 @@ def create_interface():
                 - obspy
                 - pygmt
                 
-                ### Repository
+                ### 儲存庫
                 
-                Source code: [github.com/oceanicdayi/EEW_quality_control](https://github.com/oceanicdayi/EEW_quality_control)
+                原始碼：[github.com/oceanicdayi/EEW_quality_control](https://github.com/oceanicdayi/EEW_quality_control)
                 """
             )
         
-        with gr.Tab("🧪 Test Environment"):
+        with gr.Tab("🧪 環境測試"):
             gr.Markdown(
                 """
-                ### Environment Check
+                ### 環境檢查
                 
-                Click the button below to verify that all required dependencies are installed and accessible.
+                點擊下方按鈕以驗證所有必要的相依套件是否已安裝且可存取。
                 """
             )
             
             test_output = gr.Textbox(
-                label="Test Results",
+                label="測試結果",
                 lines=10,
                 max_lines=20,
                 interactive=False
@@ -123,11 +128,11 @@ def create_interface():
             def run_environment_test():
                 """Run basic environment checks"""
                 output = []
-                output.append("=== EEW Quality Control Environment Test ===\n")
+                output.append("=== 地震預警品質控制環境測試 ===\n")
                 
                 # Check Python version
                 import sys
-                output.append(f"Python version: {sys.version}\n")
+                output.append(f"Python 版本：{sys.version}\n")
                 
                 # Check dependencies
                 deps = {
@@ -139,17 +144,17 @@ def create_interface():
                     "gradio": "gradio"
                 }
                 
-                output.append("\n=== Checking Dependencies ===")
+                output.append("\n=== 檢查相依套件 ===")
                 for name, module in deps.items():
                     try:
                         mod = __import__(module)
                         version = getattr(mod, '__version__', 'unknown')
-                        output.append(f"✓ {name}: {version}")
+                        output.append(f"✓ {name}：{version}")
                     except ImportError as e:
-                        output.append(f"✗ {name}: NOT FOUND - {e}")
+                        output.append(f"✗ {name}：未找到 - {e}")
                 
                 # Check for data files
-                output.append("\n=== Checking Data Files ===")
+                output.append("\n=== 檢查資料檔案 ===")
                 required_files = [
                     "eewrep_function.py",
                     "01_rep2txt_pfile.py",
@@ -164,35 +169,35 @@ def create_interface():
                     if os.path.exists(filepath):
                         output.append(f"✓ {filepath}")
                     else:
-                        output.append(f"✗ {filepath} - NOT FOUND")
+                        output.append(f"✗ {filepath} - 未找到")
                 
                 # Check directories
-                output.append("\n=== Checking Directories ===")
+                output.append("\n=== 檢查目錄 ===")
                 dirs = ["192", "outputs", "old"]
                 for dirname in dirs:
                     if os.path.exists(dirname):
-                        output.append(f"✓ {dirname}/ - EXISTS")
+                        output.append(f"✓ {dirname}/ - 存在")
                     else:
-                        output.append(f"✗ {dirname}/ - NOT FOUND")
+                        output.append(f"✗ {dirname}/ - 未找到")
                 
-                output.append("\n=== Test Complete ===")
-                output.append("\nNote: This is a deployment of the EEW Quality Control tools.")
-                output.append("To fully use the application, you need to provide the required data files.")
+                output.append("\n=== 測試完成 ===")
+                output.append("\n注意：這是地震預警品質控制工具的部署版本。")
+                output.append("若要使用應用程式的完整功能，您需要提供所需的資料檔案。")
                 
                 return "\n".join(output)
             
-            test_button = gr.Button("Run Environment Test", variant="primary")
+            test_button = gr.Button("執行環境測試", variant="primary")
             test_button.click(fn=run_environment_test, outputs=test_output)
         
-        with gr.Tab("📖 Documentation"):
+        with gr.Tab("📖 使用說明"):
             gr.Markdown(
                 """
-                ### Script Documentation
+                ### 腳本說明文件
                 
                 #### 01_rep2txt_pfile.py
-                Converts EEW report files to text format using P-file input.
+                使用 P 檔輸入將地震預警報告檔案轉換為文字格式。
                 
-                **Usage:**
+                **使用方式：**
                 ```bash
                 python 01_rep2txt_pfile.py
                 ```
@@ -200,16 +205,16 @@ def create_interface():
                 ---
                 
                 #### 02_plot_report_pfile.py
-                Plots EEW report summary from P-file data.
+                從 P 檔資料繪製地震預警報告摘要。
                 
-                **Arguments:**
-                - `pfile`: P-file name (e.g., 17010623.P20)
-                - `--kind`: Analysis type (f42/f43/gei/all, default: all)
-                - `--base-folder`: Directory containing .rep files (default: ./192)
-                - `--xmin`, `--xmax`: X-axis range in seconds
-                - `--ymin`, `--ymax`: Y-axis range
+                **參數：**
+                - `pfile`：P 檔名稱（例如：17010623.P20）
+                - `--kind`：分析類型（f42/f43/gei/all，預設：all）
+                - `--base-folder`：包含 .rep 檔案的目錄（預設：./192）
+                - `--xmin`、`--xmax`：X 軸範圍（秒）
+                - `--ymin`、`--ymax`：Y 軸範圍
                 
-                **Usage:**
+                **使用方式：**
                 ```bash
                 python 02_plot_report_pfile.py 17010623.P20 --kind all
                 ```
@@ -217,16 +222,16 @@ def create_interface():
                 ---
                 
                 #### 03_plot_ez_maps.py
-                Plots EZ (epicenter zone) maps.
+                繪製震央區域地圖。
                 
-                **Arguments:**
-                - `pfile`: P-file name
-                - `--epi-lon`: Epicenter longitude (required)
-                - `--epi-lat`: Epicenter latitude (required)
-                - `--kind`: Analysis type (f42/f43/gei/all, default: all)
-                - `--base-folder`: Directory containing .rep files (default: ./192)
+                **參數：**
+                - `pfile`：P 檔名稱
+                - `--epi-lon`：震央經度（必要）
+                - `--epi-lat`：震央緯度（必要）
+                - `--kind`：分析類型（f42/f43/gei/all，預設：all）
+                - `--base-folder`：包含 .rep 檔案的目錄（預設：./192）
                 
-                **Usage:**
+                **使用方式：**
                 ```bash
                 python 03_plot_ez_maps.py 17010623.P20 --epi-lon 120.5 --epi-lat 23.5
                 ```
@@ -234,14 +239,14 @@ def create_interface():
                 ---
                 
                 #### 04_plot_tsmip_trigger_map.py
-                Plots TSMIP trigger maps.
+                繪製 TSMIP 觸發地圖。
                 
-                **Arguments:**
-                - `pfile`: P-file name
-                - `--kind`: Analysis type (f42/f43/gei/all, default: all)
-                - `--base-folder`: Directory containing .rep files (default: ./192)
+                **參數：**
+                - `pfile`：P 檔名稱
+                - `--kind`：分析類型（f42/f43/gei/all，預設：all）
+                - `--base-folder`：包含 .rep 檔案的目錄（預設：./192）
                 
-                **Usage:**
+                **使用方式：**
                 ```bash
                 python 04_plot_tsmip_trigger_map.py 17010623.P20
                 ```
@@ -249,14 +254,14 @@ def create_interface():
                 ---
                 
                 #### 05_plot_conunty.py
-                Analyzes EEW data by county.
+                依縣市分析地震預警資料。
                 
-                **Arguments:**
-                - `pfile`: P-file name
-                - `--kind`: Analysis type (f42/f43/gei/all, default: all)
-                - `--base-folder`: Directory containing .rep files (default: ./192)
+                **參數：**
+                - `pfile`：P 檔名稱
+                - `--kind`：分析類型（f42/f43/gei/all，預設：all）
+                - `--base-folder`：包含 .rep 檔案的目錄（預設：./192）
                 
-                **Usage:**
+                **使用方式：**
                 ```bash
                 python 05_plot_conunty.py 17010623.P20
                 ```
@@ -264,55 +269,161 @@ def create_interface():
                 ---
                 
                 #### 06_plot_reporting_time_pfile.py
-                Plots reporting time analysis from P-file data.
+                從 P 檔資料繪製報告時間分析。
                 
-                **Arguments:**
-                - `pfile`: P-file name
-                - `--kind`: Analysis type (f42/f43/gei/all, default: all)
-                - `--base-folder`: Directory containing .rep files (default: ./192)
-                - `--xmin`, `--xmax`: X-axis range in seconds
+                **參數：**
+                - `pfile`：P 檔名稱
+                - `--kind`：分析類型（f42/f43/gei/all，預設：all）
+                - `--base-folder`：包含 .rep 檔案的目錄（預設：./192）
+                - `--xmin`、`--xmax`：X 軸範圍（秒）
                 
-                **Usage:**
+                **使用方式：**
                 ```bash
                 python 06_plot_reporting_time_pfile.py 17010623.P20
                 ```
                 
                 ---
                 
-                ### Data File Formats
+                ### 資料檔案格式
                 
-                #### P-file Format
-                P-files contain earthquake parameters and station data:
-                - Line 1: Event information (time, magnitude, depth)
-                - Lines 2+: Station information (name, arrival time, intensity, PGA)
+                #### P 檔格式
+                P 檔包含地震參數與測站資料：
+                - 第 1 行：事件資訊（時間、規模、深度）
+                - 第 2 行以後：測站資訊（名稱、到時、震度、PGA）
                 
-                #### Report Files (.rep)
-                Report files contain EEW system reports with timing and location information.
+                #### 報告檔案（.rep）
+                報告檔案包含地震預警系統報告，包括時間與位置資訊。
                 
-                #### XML Files
-                XML files contain official earthquake information from CWA (Central Weather Administration).
+                #### XML 檔案
+                XML 檔案包含中央氣象署（CWA）的官方地震資訊。
                 
-                ### Contact
+                ### 聯絡方式
                 
-                For questions or issues, please visit the GitHub repository:
+                如有問題或疑問，請訪問 GitHub 儲存庫：
                 [github.com/oceanicdayi/EEW_quality_control](https://github.com/oceanicdayi/EEW_quality_control)
                 """
             )
+        
+        with gr.Tab("🎯 互動式展示"):
+            gr.Markdown(
+                """
+                ### 地震預警效能互動展示
+                
+                此功能展示地震預警系統的效能分析與視覺化功能。
+                """
+            )
+            
+            with gr.Row():
+                with gr.Column():
+                    gr.Markdown("""
+                    #### 模擬資料範例
+                    以下展示地震預警系統可能的分析結果：
+                    """)
+                    
+                    demo_stats = gr.DataFrame(
+                        value=pd.DataFrame({
+                            "項目": [
+                                "平均報告時間",
+                                "最快報告時間",
+                                "最慢報告時間",
+                                "觸發測站數",
+                                "涵蓋縣市數"
+                            ],
+                            "數值": ["8.5 秒", "3.2 秒", "15.8 秒", "45 站", "12 縣市"]
+                        }),
+                        label="效能統計摘要",
+                        interactive=False
+                    )
+                    
+                with gr.Column():
+                    gr.Markdown("""
+                    #### 系統特色
+                    """)
+                    gr.Markdown("""
+                    - ⚡ **快速反應**：平均 8.5 秒內發出預警
+                    - 🗺️ **廣泛覆蓋**：涵蓋全台主要縣市
+                    - 📊 **精準分析**：整合多站資料提高準確度
+                    - 🔍 **品質控制**：持續監控系統效能
+                    """)
+            
+            gr.Markdown("""
+            ---
+            #### 資料視覺化範例
+            
+            地震預警系統可產生以下類型的視覺化圖表：
+            
+            1. **報告時間分析圖**：顯示各測站的報告時間分布
+            2. **觸發地圖**：顯示觸發的測站位置與震度
+            3. **震央區域圖**：顯示震央位置與周圍測站
+            4. **縣市統計圖**：依縣市統計觸發情況
+            5. **時序分析圖**：顯示預警系統的時間演進
+            
+            若要產生實際的分析圖表，請使用對應的 Python 腳本並提供資料檔案。
+            """)
+            
+            def generate_sample_plot():
+                """Generate a sample performance plot"""
+                import matplotlib
+                # Try to set a font that supports Chinese characters
+                try:
+                    matplotlib.rcParams['font.sans-serif'] = ['DejaVu Sans', 'Arial Unicode MS', 'Microsoft YaHei', 'SimHei']
+                    matplotlib.rcParams['axes.unicode_minus'] = False
+                except:
+                    pass  # Fall back to default if font setting fails
+                
+                fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+                
+                # Sample reporting time plot
+                stations = [f'STA{i:02d}' for i in range(1, 11)]
+                times = np.random.uniform(3, 15, 10)
+                colors = ['green' if t < 8 else 'orange' if t < 12 else 'red' for t in times]
+                
+                ax1.barh(stations, times, color=colors, alpha=0.7)
+                ax1.set_xlabel('報告時間（秒）', fontsize=12)
+                ax1.set_ylabel('測站', fontsize=12)
+                ax1.set_title('測站報告時間分布（範例）', fontsize=14, fontweight='bold')
+                ax1.axvline(x=8.5, color='blue', linestyle='--', linewidth=2, label='平均時間')
+                ax1.legend()
+                ax1.grid(axis='x', alpha=0.3)
+                
+                # Sample intensity distribution
+                intensities = ['0', '1', '2', '3', '4', '5-', '5+', '6-', '6+']
+                counts = [120, 85, 65, 45, 30, 18, 10, 5, 2]
+                colors_int = ['lightgreen', 'yellow', 'gold', 'orange', 'darkorange', 
+                             'red', 'darkred', 'purple', 'darkviolet']
+                
+                ax2.bar(intensities, counts, color=colors_int, alpha=0.7, edgecolor='black')
+                ax2.set_xlabel('震度級距', fontsize=12)
+                ax2.set_ylabel('測站數量', fontsize=12)
+                ax2.set_title('震度分布統計（範例）', fontsize=14, fontweight='bold')
+                ax2.grid(axis='y', alpha=0.3)
+                
+                plt.tight_layout()
+                
+                # Save to temporary file with automatic cleanup
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.png', dir='/tmp') as temp_file:
+                    temp_path = temp_file.name
+                    plt.savefig(temp_path, dpi=100, bbox_inches='tight')
+                plt.close()
+                
+                return temp_path
+            
+            demo_button = gr.Button("產生範例圖表", variant="primary")
+            demo_plot = gr.Image(label="地震預警效能分析圖表", type="filepath")
+            demo_button.click(fn=generate_sample_plot, outputs=demo_plot)
         
         gr.Markdown(
             """
             ---
             
-            ### Note
+            ### 注意事項
             
-            This is a web interface for the EEW Quality Control tools. The original scripts are designed 
-            to be run from the command line with specific data files. This interface provides documentation 
-            and environment testing capabilities.
+            這是地震預警品質控制工具的網頁介面。原始腳本是設計為使用特定資料檔案從命令列執行。
+            本介面提供說明文件、環境測試功能以及互動式展示範例。
             
-            To use the full functionality of these tools, clone the repository and run the scripts locally 
-            with your EEW data files.
+            若要使用這些工具的完整功能，請複製儲存庫並使用您的地震預警資料檔案在本地執行腳本。
             
-            **Repository:** [github.com/oceanicdayi/EEW_quality_control](https://github.com/oceanicdayi/EEW_quality_control)
+            **儲存庫：**[github.com/oceanicdayi/EEW_quality_control](https://github.com/oceanicdayi/EEW_quality_control)
             """
         )
     
