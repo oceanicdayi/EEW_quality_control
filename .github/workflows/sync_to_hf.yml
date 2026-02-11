@@ -21,5 +21,13 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          # 將你的程式碼推送到 Hugging Face Spaces
-          git push --force-with-lease https://cwbdayi:$HF_TOKEN@huggingface.co/spaces/cwbdayi/EEW_quality_control main:main
+          # 1. 確保 LFS 已初始化 (如果你有大型檔案)
+          git lfs install
+          
+          # 2. 設定遠端 URL (包含 Token)
+          # 注意：cwbdayi 是你的用戶名，EEW_quality_control 是 Space 名稱
+          REMOTE_URL="https://cwbdayi:$HF_TOKEN@huggingface.co/spaces/cwbdayi/EEW_quality_control"
+          
+          # 3. 強制推送
+          # 使用 --force 可以解決 (stale info) 或 (fetch first) 的衝突問題
+          git push --force $REMOTE_URL main
