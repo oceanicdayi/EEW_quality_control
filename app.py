@@ -370,6 +370,9 @@ def create_interface():
                     matplotlib.rcParams['font.sans-serif'] = ['DejaVu Sans', 'Arial Unicode MS', 'Microsoft YaHei', 'SimHei']
                     matplotlib.rcParams['axes.unicode_minus'] = False
                     
+                    # Constants
+                    KM_PER_DEGREE = 111.0  # Approximate kilometers per degree of latitude/longitude
+                    
                     # Read station file
                     tsmip_all = pd.read_csv(
                         station_file_path,
@@ -416,7 +419,7 @@ def create_interface():
                     fig, ax = plt.subplots(figsize=(12, 10))
                     
                     # Set map bounds
-                    buffer = (max_dist_km / 111) + 0.3
+                    buffer = (max_dist_km / KM_PER_DEGREE) + 0.3
                     ax.set_xlim(epicenter_lon - buffer, epicenter_lon + buffer)
                     ax.set_ylim(epicenter_lat - buffer, epicenter_lat + buffer)
                     
@@ -464,7 +467,7 @@ def create_interface():
                     # Plot trigger range circle
                     circle = plt.Circle(
                         (epicenter_lon, epicenter_lat),
-                        max_dist_km / 111,  # Convert km to degrees
+                        max_dist_km / KM_PER_DEGREE,  # Convert km to degrees
                         fill=False,
                         color='orange',
                         linestyle='--',
@@ -480,7 +483,7 @@ def create_interface():
                     ax.set_xlabel('經度', fontsize=12)
                     ax.set_ylabel('緯度', fontsize=12)
                     ax.set_title(
-                        f'TSMIP 觸發地圖\\n觸發比率: {trigger_ratio:.1f}% ({triggered_in_range}/{total_in_range})\\n最遠測站: {farthest_sta} ({max_dist_km:.1f} km)',
+                        f'TSMIP 觸發地圖\n觸發比率: {trigger_ratio:.1f}% ({triggered_in_range}/{total_in_range})\n最遠測站: {farthest_sta} ({max_dist_km:.1f} km)',
                         fontsize=14,
                         fontweight='bold'
                     )
@@ -492,7 +495,7 @@ def create_interface():
                     plt.tight_layout()
                     
                     # Save to temporary file
-                    with tempfile.NamedTemporaryFile(delete=False, suffix='.png', dir='/tmp') as temp_file:
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as temp_file:
                         temp_path = temp_file.name
                         plt.savefig(temp_path, dpi=150, bbox_inches='tight')
                     plt.close()
@@ -509,7 +512,7 @@ def create_interface():
                     
                 except Exception as e:
                     import traceback
-                    error_msg = f"錯誤：{str(e)}\\n\\n{traceback.format_exc()}"
+                    error_msg = f"錯誤：{str(e)}\n\n{traceback.format_exc()}"
                     return None, error_msg
             
             generate_map_btn.click(
