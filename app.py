@@ -16,6 +16,7 @@ import numpy as np
 _obspy_import_error = None
 
 try:
+    import setuptools  # noqa: F401 - ensure pkg_resources is available (Python 3.12+)
     from obspy import UTCDateTime
     from obspy.clients.fdsn import Client
     OBSPY_AVAILABLE = True
@@ -29,7 +30,13 @@ _client = None
 def get_client():
     """獲取或初始化 IRIS FDSN 客戶端"""
     if not OBSPY_AVAILABLE:
-        raise Exception(f"ObsPy 未安裝或無法匯入: {_obspy_import_error}\n\n請確認已安裝所有系統相依套件。")
+        hint = ""
+        if "pkg_resources" in (_obspy_import_error or ""):
+            hint = "\n提示：此錯誤通常發生在 Python 3.12+ 環境中，請先安裝 setuptools：pip install setuptools"
+        raise Exception(
+            f"ObsPy 未安裝或無法匯入: {_obspy_import_error}\n\n"
+            f"請確認已安裝所有系統相依套件。{hint}"
+        )
     global _client
     if _client is None:
         try:
