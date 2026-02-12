@@ -13,6 +13,7 @@ from pathlib import Path
 
 def collect_workflow_info():
     """收集 workflow 相關資訊"""
+    from datetime import timezone
     info = {
         "workflow_name": os.getenv("GITHUB_WORKFLOW", "Unknown"),
         "run_id": os.getenv("GITHUB_RUN_ID", "Unknown"),
@@ -22,7 +23,7 @@ def collect_workflow_info():
         "sha": os.getenv("GITHUB_SHA", "Unknown")[:7] if os.getenv("GITHUB_SHA") else "Unknown",
         "repository": os.getenv("GITHUB_REPOSITORY", "Unknown"),
         "event_name": os.getenv("GITHUB_EVENT_NAME", "Unknown"),
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC"),
+        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
     }
     return info
 

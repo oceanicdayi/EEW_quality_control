@@ -131,9 +131,6 @@ jobs:
       # 步驟 1：下載儲存庫內容
       - name: 📦 Checkout Code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # 取得完整歷史以供報告分析
-          lfs: true
 
       # 步驟 2：設置 Python 環境
       - name: 🐍 Setup Python
