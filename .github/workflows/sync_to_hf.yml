@@ -126,6 +126,8 @@ jobs:
   run-python-script:
     runs-on: ubuntu-latest
     needs: sync-and-deploy # 等待同步工作完成後再執行
+    permissions:
+      contents: read # 僅需讀取權限以執行腳本
     steps:
       # 步驟 1：下載儲存庫內容
       - name: 📦 Checkout Code
