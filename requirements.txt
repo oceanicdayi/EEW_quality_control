@@ -2,3 +2,4 @@ obspy
 gradio
 matplotlib
 numpy
+setuptools
