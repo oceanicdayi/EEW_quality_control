@@ -1,123 +1,18 @@
-# 工作流程名稱：同步到 Hugging Face Hub 並監控部署
-name: Sync to Hugging Face Hub (Optimized with Email)
+name: Sync to HF
 
 on:
-  push:
-    branches: [main] # 當 main 分支有更新時觸發
-  workflow_dispatch: # 允許手動觸發
   schedule:
-    - cron: '0 */6 * * *' # 每 6 小時檢查一次 HF 是否有更新
-
-# 防止多個工作流同時跑，導致 Git 衝突
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    - cron: '0 * * * *'
 
 jobs:
-  sync-and-deploy:
-    runs-on: ubuntu-latest # 使用最新的 Ubuntu 虛擬機
-    permissions:
-      contents: write # 賦予寫入權限以便推送到 GitHub
-    env:
-      HF_SPACE: cwbdayi/EEW_quality_control # 定義 HF Space 路徑
-      HF_USERNAME: cwbdayi # 定義 HF 用戶名
+  sync:
+    runs-on: ubuntu-latest
 
     steps:
-      # 步驟 1：下載儲存庫內容
-      - name: 📦 Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # 取得完整歷史紀錄以利比對時間戳
-          lfs: true # 支援大型檔案 (LFS)
+    - name: Checkout
+      uses: actions/checkout@v2
 
-      # 步驟 2：設定 Git 與 HF 遠端連線
-      - name: 🔧 Configure Git & HF Remote
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }} # 從 Secret 讀取 Token
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          # 使用嵌入 Token 的方式建立 HF 遠端
-          git remote add hf "https://${{ env.HF_USERNAME }}:${HF_TOKEN}@huggingface.co/spaces/${{ env.HF_SPACE }}"
-
-      # 步驟 3：執行雙向同步邏輯
-      - name: 🔄 Bi-directional Sync
-        run: |
-          echo "🔍 正在檢查 HF 與 GitHub 的更新狀況..."
-          git fetch hf main # 抓取 HF 的更新資訊
-          GITHUB_TIME=$(git log -1 --format=%ct)
-          HF_TIME=$(git log -1 --format=%ct hf/main)
-          
-          # 如果 HF 上的提交時間較新，則將其合併回 GitHub
-          if [ "$HF_TIME" -gt "$GITHUB_TIME" ]; then
-            echo "📥 HF 有較新的變更，執行合併中..."
-            git merge hf/main --no-edit -m "🔄 [skip ci] 從 HF 同步更新內容"
-            git push origin main
-          fi
-          
-          # 將最新的程式碼推送到 HF
-          echo "📤 正在推送更新至 Hugging Face..."
-          git push hf main --force-with-lease
-
-      # 步驟 4：監控 HF Space 的部署階段
-      - name: 🚦 Wait for Deployment
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          API_URL="https://huggingface.co/api/spaces/${{ env.HF_SPACE }}"
-          echo "⏳ 監控部署狀態中..."
-          for i in {1..40}; do
-            # 透過 API 獲取目前的 stage 狀態
-            STAGE=$(curl -s -H "Authorization: Bearer $HF_TOKEN" "$API_URL/runtime" | python3 -c "import sys,json; print(json.load(sys.stdin).get('stage','UNKNOWN'))")
-            echo "嘗試 $i: 目前狀態 = $STAGE"
-            # 當狀態為 RUNNING 或錯誤時停止等待
-            [[ "$STAGE" == "RUNNING" || "$STAGE" == "BUILD_ERROR" || "$STAGE" == "RUNTIME_ERROR" ]] && break
-            sleep 15
-          done
-
-      # 步驟 5：抓取並清洗 SSE 日誌格式
-      - name: 📄 Fetch and Clean Logs
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          LOG_DIR="hf_deploy_logs"
-          TIMESTAMP=$(date +%Y%m%d_%H%M)
-          mkdir -p "$LOG_DIR"
-          API_BASE="https://huggingface.co/api/spaces/${{ env.HF_SPACE }}/logs"
-          
-          # 抓取 Build 日誌並過濾掉 SSE 的 data: 前綴
-          curl -s -N --fail -m 30 -H "Authorization: Bearer $HF_TOKEN" "$API_BASE/build" | sed 's/^data: //g' > "$LOG_DIR/build_$TIMESTAMP.log" || echo "Build log end"
-          
-          # 抓取執行日誌快照 (限時 20 秒以防卡死)
-          curl -s -N --fail -m 20 -H "Authorization: Bearer $HF_TOKEN" "$API_BASE/run" | sed 's/^data: //g' > "$LOG_DIR/run_$TIMESTAMP.log" || echo "Run log snapshot done"
-
-      # 步驟 6：將日誌 Commit 回 GitHub
-      - name: 💾 Archive Logs
-        run: |
-          git add hf_deploy_logs/
-          if ! git diff --cached --quiet; then
-            git commit -m "[skip ci] 📋 紀錄 HF 部署日誌 ($GITHUB_SHA)"
-            git push origin main
-          fi
-
-      # 步驟 7：寄送 Email 通知
-      - name: 📧 Send Email Notification
-        if: always() # 確保無論前面的步驟成功或失敗，都會執行這一步
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: ${{ secrets.MAIL_SERVER }} # SMTP 伺服器 (如 smtp.gmail.com)
-          server_port: 465 # 直接使用 465 埠號 (SSL)
-          username: ${{ secrets.MAIL_USERNAME }} # 寄件帳號
-          password: ${{ secrets.MAIL_PASSWORD }} # 寄件密碼 (應用程式密碼)
-          subject: "GitHub Action [${{ github.workflow }}] 狀態: ${{ job.status }}"
-          to: ${{ secrets.RECEIVE_EMAIL }} # 從 Secret 讀取收件人地址
-          from: GitHub Actions Bot
-          body: |
-            Hugging Face 同步任務已完成。
-            
-            ● 執行結果：${{ job.status }}
-            ● 觸發分支：${{ github.ref_name }}
-            ● 觸發人員：${{ github.actor }}
-            
-            詳細執行狀況請參閱 GitHub Actions 頁面：
-            https://github.com/${{ github.repository_with_owner }}/actions/runs/${{ github.run_id }}
+    - name: Sync to HF
+      run: |
+            git fetch hf
+            git merge hf/main --allow-unrelated-histories --no-edit -m "🔄 [skip ci] 從 HF 同步更新內容"
