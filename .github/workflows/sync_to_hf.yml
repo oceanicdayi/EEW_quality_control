@@ -100,8 +100,14 @@ jobs:
             git push origin main
           fi
 
-      # 步驟 7：寄送 Email 通知
-      - name: 📧 Send Email Notification
+      # 步驟 7：產生工作流程報告
+      - name: 📊 Generate Workflow Report
+        if: always()
+        run: |
+          python3 workflow_report.py
+
+      # 步驟 8：寄送 Email 通知（包含詳細報告）
+      - name: 📧 Send Email Notification with Report
         if: always() # 確保無論前面的步驟成功或失敗，都會執行這一步
         uses: dawidd6/action-send-mail@v3
         with:
@@ -109,20 +115,13 @@ jobs:
           server_port: 465 # 直接使用 465 埠號 (SSL)
           username: ${{ secrets.MAIL_USERNAME }} # 寄件帳號
           password: ${{ secrets.MAIL_PASSWORD }} # 寄件密碼 (應用程式密碼)
-          subject: "GitHub Action [${{ github.workflow }}] 狀態: ${{ job.status }}"
-          to: ${{ secrets.RECEIVE_EMAIL }} # 從 Secret 讀取收件人地址
-          from: GitHub Actions Bot
-          body: |
-            Hugging Face 同步任務已完成。
-            
-            ● 執行結果：${{ job.status }}
-            ● 觸發分支：${{ github.ref_name }}
-            ● 觸發人員：${{ github.actor }}
-            
-            詳細執行狀況請參閱 GitHub Actions 頁面：
-            https://github.com/${{ github.repository_with_owner }}/actions/runs/${{ github.run_id }}
+          subject: "GitHub Actions 工作流程報告 [${{ github.workflow }}] - ${{ job.status }}"
+          to: oceanicdayi@gmail.com # 直接寄送到指定信箱
+          from: GitHub Actions Bot <github-actions@noreply.github.com>
+          body: file://workflow_summary.txt
+          convert_markdown: false
 
-  # 新增工作：執行 Python 腳本測試
+  # 新增工作：執行 Python 腳本測試與報告
   run-python-script:
     runs-on: ubuntu-latest
     needs: sync-and-deploy # 等待同步工作完成後再執行
@@ -144,3 +143,25 @@ jobs:
         run: |
           echo "執行 repository 中的 Python 腳本..."
           python3 hello_world.py
+
+      # 步驟 4：產生與寄送工作流程報告
+      - name: 📊 Generate and Send Workflow Report
+        if: always()
+        run: |
+          echo "產生工作流程執行報告..."
+          python3 workflow_report.py
+          
+      # 步驟 5：寄送詳細報告給指定信箱
+      - name: 📧 Email Report to oceanicdayi@gmail.com
+        if: always()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.MAIL_SERVER }}
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "📊 GitHub Actions 工作流程完整報告 [Run #${{ github.run_number }}]"
+          to: oceanicdayi@gmail.com
+          from: GitHub Actions <github-actions@noreply.github.com>
+          body: file://workflow_summary.txt
+          convert_markdown: false
