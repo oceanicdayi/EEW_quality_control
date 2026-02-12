@@ -1,155 +1,315 @@
 import gradio as gr
-import folium
-from folium.plugins import MarkerCluster
-from obspy.clients.fdsn import Client
-from obspy import UTCDateTime
-import warnings
+import numpy as np
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 
-# 忽略 Obspy 的特定警告
-warnings.filterwarnings("ignore", message="The coordinates conversion method is not specified.*")
+# --- Constants ---
+VP = 6.0   # P-wave velocity (km/s)
+VS = 3.5   # S-wave velocity (km/s)
 
-def get_earthquake_map(start_time_str, end_time_str, min_mag, max_mag):
-    """
-    從 IRIS FDSN 獲取地震目錄並在 Folium 地圖上繪製。
-    """
-    try:
-        # 1. 轉換時間字串為 UTCDateTime 物件
-        start_time = UTCDateTime(start_time_str)
-        end_time = UTCDateTime(end_time_str)
+# --- Calculation Functions ---
 
-        # 2. 初始化 FDSN 客戶端
-        client = Client("IRIS")
+def calculate_warning_time(distance_km, detection_time_s):
+    """Calculate EEW warning time given distance from epicenter and detection delay."""
+    if distance_km <= 0:
+        return 0.0, 0.0, 0.0
+    t_p = distance_km / VP
+    t_s = distance_km / VS
+    warning_time = t_s - t_p - detection_time_s
+    return round(t_p, 2), round(t_s, 2), round(max(warning_time, 0), 2)
 
-        # 3. 獲取地震目錄
-        catalog = client.get_events(
-            starttime=start_time,
-            endtime=end_time,
-            minmagnitude=min_mag,
-            maxmagnitude=max_mag
-        )
 
-        # 4. 建立 Folium 地圖
-        # 以台灣為中心點，但可以調整
-        m = folium.Map(location=[23.5, 121], zoom_start=6, tiles="CartoDB positron")
+def estimate_magnitude(amplitude_mm, distance_km):
+    """Estimate local magnitude using the Richter formula: ML = log10(A) + distance correction."""
+    if amplitude_mm <= 0 or distance_km <= 0:
+        return 0.0
+    ml = np.log10(amplitude_mm) + 1.11 * np.log10(distance_km) + 0.00189 * distance_km - 2.09
+    return round(float(ml), 2)
 
-        if not catalog:
-            # 如果沒有找到事件，回傳一個空地圖和訊息
-            folium.Marker(
-                [23.5, 121], 
-                popup="在指定範圍內沒有找到地震事件。"
-            ).add_to(m)
-            return m._repr_html_()
 
-        # 5. 建立一個 MarkerCluster
-        marker_cluster = MarkerCluster().add_to(m)
+def intensity_from_pga(pga_gal):
+    """Convert PGA (gal) to approximate seismic intensity scale (CWA scale)."""
+    if pga_gal < 0.8:
+        return "0 – Micro"
+    elif pga_gal < 2.5:
+        return "1 – Very Minor"
+    elif pga_gal < 8.0:
+        return "2 – Minor"
+    elif pga_gal < 25:
+        return "3 – Light"
+    elif pga_gal < 80:
+        return "4 – Moderate"
+    elif pga_gal < 140:
+        return "5 Weak"
+    elif pga_gal < 250:
+        return "5 Strong"
+    elif pga_gal < 440:
+        return "6 Weak"
+    elif pga_gal < 800:
+        return "6 Strong"
+    else:
+        return "7 – Severe"
 
-        # 6. 遍歷地震事件並添加到地圖
-        for event in catalog:
-            try:
-                # 獲取首選的震源和規模
-                origin = event.preferred_origin()
-                magnitude = event.preferred_magnitude()
 
-                if not origin or not magnitude:
-                    continue
+# --- Plotting Functions ---
 
-                lat = origin.latitude
-                lon = origin.longitude
-                # 深度（公尺），轉換為公里
-                depth_km = origin.depth / 1000.0 if origin.depth else 0
-                mag_value = magnitude.mag
-                mag_type = magnitude.magnitude_type
-                event_time = origin.time.strftime('%Y-%m-%d %H:%M:%S UTC')
+def plot_wave_propagation(distance_km, detection_time_s):
+    """Generate a time-distance plot showing P-wave, S-wave, and warning time."""
+    t_p, t_s, warning = calculate_warning_time(distance_km, detection_time_s)
 
-                # 建立彈出視窗的 HTML
-                popup_html = f"""
-                <b>時間:</b> {event_time}<br>
-                <b>規模:</b> {mag_value:.1f} ({mag_type})<br>
-                <b>深度:</b> {depth_km:.1f} km<br>
-                <b>位置:</b> ({lat:.2f}, {lon:.2f})
-                """
+    max_dist = max(distance_km * 1.3, 50)
+    distances = np.linspace(0, max_dist, 300)
+    t_p_line = distances / VP
+    t_s_line = distances / VS
 
-                # 根據規模設定圓圈大小
-                radius = mag_value * 2
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.plot(t_p_line, distances, label=f"P-wave ({VP} km/s)", color="#2196F3", linewidth=2)
+    ax.plot(t_s_line, distances, label=f"S-wave ({VS} km/s)", color="#F44336", linewidth=2)
 
-                # 添加 CircleMarker 到 MarkerCluster
-                folium.CircleMarker(
-                    location=[lat, lon],
-                    radius=radius,
-                    popup=folium.Popup(popup_html, max_width=300),
-                    color="red",
-                    fill=True,
-                    fill_color="red",
-                    fill_opacity=0.4
-                ).add_to(marker_cluster)
-                
-            except Exception as e:
-                # 忽略單一事件的錯誤
-                print(f"處理事件時發生錯誤: {e}")
+    if distance_km > 0:
+        ax.axhline(y=distance_km, color="gray", linestyle="--", alpha=0.5, label=f"Station at {distance_km} km")
+        ax.plot(t_p, distance_km, "bo", markersize=10, zorder=5)
+        ax.plot(t_s, distance_km, "ro", markersize=10, zorder=5)
 
-        # 添加圖層控制器
-        folium.LayerControl().add_to(m)
+        alert_time = t_p + detection_time_s
+        if warning > 0:
+            ax.fill_betweenx(
+                [distance_km - 2, distance_km + 2],
+                alert_time, t_s,
+                color="#4CAF50", alpha=0.3, label=f"Warning time: {warning}s"
+            )
+            ax.annotate(
+                f"⚠ {warning}s warning",
+                xy=((alert_time + t_s) / 2, distance_km),
+                fontsize=12, ha="center", va="bottom", fontweight="bold", color="#2E7D32"
+            )
 
-        # 7. 回傳地圖的 HTML 內容
-        return m._repr_html_()
+        blind_radius = VP * detection_time_s * VS / (VP - VS) if VP != VS else 0
+        if blind_radius > 0:
+            ax.axhline(y=blind_radius, color="#FF9800", linestyle=":", alpha=0.7, label=f"Blind zone radius: {blind_radius:.1f} km")
 
-    except Exception as e:
-        # 處理主要錯誤 (例如 FDSN 服務無法連線或時間格式錯誤)
-        return f"<p style='color:red;'>查詢時發生錯誤：{e}</p>"
+    ax.set_xlabel("Time (seconds)", fontsize=12)
+    ax.set_ylabel("Distance from Epicenter (km)", fontsize=12)
+    ax.set_title("EEW Wave Propagation & Warning Time", fontsize=14, fontweight="bold")
+    ax.legend(loc="upper left", fontsize=9)
+    ax.grid(True, alpha=0.3)
+    plt.tight_layout()
+    return fig
 
-# 建立 Gradio 介面
-with gr.Blocks(title="地震目錄視覺化") as demo:
-    gr.Markdown("# IRIS FDSN 地震目錄地圖")
-    gr.Markdown("使用 Obspy 從 IRIS FDSN 抓取地震目錄，並使用 Folium 繪製互動式地圖。")
-    
-    with gr.Row():
-        start_time_input = gr.Textbox(
-            label="開始時間 (UTC)", 
-            value="2024-04-02T16:00:00",
-            info="格式: YYYY-MM-DDTHH:MM:SS"
-        )
-        end_time_input = gr.Textbox(
-            label="結束時間 (UTC)", 
-            value="2024-04-03T16:00:00",
-            info="格式: YYYY-MM-DDTHH:MM:SS"
-        )
-    
-    with gr.Row():
-        min_mag_input = gr.Slider(
-            label="最小規模", 
-            minimum=0.0, 
-            maximum=10.0, 
-            value=4.0, 
-            step=0.1
-        )
-        max_mag_input = gr.Slider(
-            label="最大規模", 
-            minimum=0.0, 
-            maximum=10.0, 
-            value=10.0, 
-            step=0.1
-        )
-        
-    submit_btn = gr.Button("查詢並繪製地圖", variant="primary")
-    
-    # 輸出元件：使用 gr.HTML 來顯示 Folium 地圖
-    map_output = gr.HTML(label="地震分佈圖")
 
-    # 綁定按鈕點擊事件
-    submit_btn.click(
-        fn=get_earthquake_map,
-        inputs=[start_time_input, end_time_input, min_mag_input, max_mag_input],
-        outputs=[map_output]
+def plot_blind_zone(detection_time_s):
+    """Visualize the EEW blind zone as a top-down view."""
+    blind_radius = VP * detection_time_s * VS / (VP - VS) if VP != VS else 0
+
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.set_aspect("equal")
+
+    outer = plt.Circle((0, 0), blind_radius * 2.5 if blind_radius > 0 else 50, color="#E3F2FD", zorder=0)
+    ax.add_patch(outer)
+
+    if blind_radius > 0:
+        blind = plt.Circle((0, 0), blind_radius, color="#FFCDD2", alpha=0.6, zorder=1, label=f"Blind zone ({blind_radius:.1f} km)")
+        ax.add_patch(blind)
+
+    ax.plot(0, 0, "r*", markersize=20, zorder=3, label="Epicenter")
+
+    limit = blind_radius * 3 if blind_radius > 0 else 60
+    ax.set_xlim(-limit, limit)
+    ax.set_ylim(-limit, limit)
+    ax.set_xlabel("Distance (km)", fontsize=11)
+    ax.set_ylabel("Distance (km)", fontsize=11)
+    ax.set_title("EEW Blind Zone (Top View)", fontsize=14, fontweight="bold")
+    ax.legend(loc="upper right", fontsize=9)
+    ax.grid(True, alpha=0.3)
+
+    red_patch = mpatches.Patch(color="#FFCDD2", alpha=0.6, label="No warning possible")
+    blue_patch = mpatches.Patch(color="#E3F2FD", label="Warning possible")
+    ax.legend(handles=[red_patch, blue_patch], loc="upper right", fontsize=9)
+
+    plt.tight_layout()
+    return fig
+
+
+def plot_magnitude_estimation(distance_km):
+    """Show how amplitude relates to magnitude at a given distance."""
+    amplitudes = np.logspace(-2, 2, 200)
+    magnitudes = [estimate_magnitude(a, distance_km) for a in amplitudes]
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.plot(amplitudes, magnitudes, color="#9C27B0", linewidth=2)
+    ax.set_xscale("log")
+    ax.set_xlabel("Maximum Amplitude (mm)", fontsize=12)
+    ax.set_ylabel("Estimated Magnitude (ML)", fontsize=12)
+    ax.set_title(f"Richter Magnitude Estimation (Distance = {distance_km} km)", fontsize=14, fontweight="bold")
+    ax.grid(True, alpha=0.3, which="both")
+    ax.axhline(y=3, color="green", linestyle="--", alpha=0.5, label="ML 3 – Light")
+    ax.axhline(y=5, color="orange", linestyle="--", alpha=0.5, label="ML 5 – Moderate")
+    ax.axhline(y=7, color="red", linestyle="--", alpha=0.5, label="ML 7 – Major")
+    ax.legend(fontsize=9)
+    plt.tight_layout()
+    return fig
+
+
+# --- Gradio callback wrappers ---
+
+def warning_time_callback(distance_km, detection_time_s):
+    t_p, t_s, warning = calculate_warning_time(distance_km, detection_time_s)
+    fig = plot_wave_propagation(distance_km, detection_time_s)
+    summary = (
+        f"**P-wave arrival:** {t_p} s  \n"
+        f"**S-wave arrival:** {t_s} s  \n"
+        f"**Detection delay:** {detection_time_s} s  \n"
+        f"**Available warning time:** {warning} s"
     )
-    
-    gr.Examples(
-        [
-            ["2011-03-10T00:00:00", "2011-03-12T00:00:00", 7.0, 10.0], # 2011 日本東北大地震
-            ["2024-04-02T16:00:00", "2024-04-04T00:00:00", 5.0, 10.0], # 2024 台灣花蓮地震
-            ["2023-02-06T00:00:00", "2023-02-07T00:00:00", 6.0, 10.0]  # 2023 土耳其大地震
-        ],
-        inputs=[start_time_input, end_time_input, min_mag_input, max_mag_input]
+    return fig, summary
+
+
+def blind_zone_callback(detection_time_s):
+    blind_radius = VP * detection_time_s * VS / (VP - VS) if VP != VS else 0
+    fig = plot_blind_zone(detection_time_s)
+    summary = (
+        f"**Detection delay:** {detection_time_s} s  \n"
+        f"**Blind zone radius:** {blind_radius:.1f} km  \n\n"
+        "Stations inside the blind zone cannot receive a warning before S-wave shaking arrives."
+    )
+    return fig, summary
+
+
+def magnitude_callback(amplitude_mm, distance_km):
+    ml = estimate_magnitude(amplitude_mm, distance_km)
+    fig = plot_magnitude_estimation(distance_km)
+    summary = (
+        f"**Amplitude:** {amplitude_mm} mm  \n"
+        f"**Distance:** {distance_km} km  \n"
+        f"**Estimated magnitude (ML):** {ml}"
+    )
+    return fig, summary
+
+
+def intensity_callback(pga_gal):
+    intensity = intensity_from_pga(pga_gal)
+    return f"**PGA:** {pga_gal} gal  \n**Estimated Intensity:** {intensity}"
+
+
+# --- Build Gradio App ---
+
+with gr.Blocks(title="Earthquake Early Warning Concepts") as demo:
+    gr.Markdown(
+        """
+        # 🌍 Earthquake Early Warning (EEW) — Interactive Concepts
+
+        This interactive site demonstrates the core principles behind **Earthquake Early Warning** systems.
+        Use the tabs below to explore each concept.
+        """
+    )
+
+    with gr.Tabs():
+        # --- Tab 1: Overview ---
+        with gr.TabItem("📖 What is EEW?"):
+            gr.Markdown(
+                """
+                ## What is Earthquake Early Warning?
+
+                An **Earthquake Early Warning (EEW)** system detects earthquakes quickly and sends alerts
+                **before strong shaking arrives** at a location. It exploits the fact that electronic
+                signals travel much faster than seismic waves.
+
+                ### How it works
+                1. **Seismic sensors** near the epicenter detect the fast but less destructive **P-wave**.
+                2. The system **estimates** the earthquake location, magnitude, and expected intensity.
+                3. **Alerts** are issued to areas that have not yet experienced strong shaking (S-wave).
+                4. People and automated systems can take protective actions during the **warning window**.
+
+                ### Key seismic waves
+                | Wave Type | Speed (approx.) | Damage Potential |
+                |-----------|-----------------|------------------|
+                | **P-wave** (Primary) | ~6 km/s | Low — compressional |
+                | **S-wave** (Secondary) | ~3.5 km/s | High — shearing motion |
+
+                ### Limitations
+                - **Blind zone**: Areas very close to the epicenter receive little or no warning.
+                - **Detection delay**: It takes a few seconds to detect and process the first P-wave.
+                - **Accuracy**: Initial estimates may be revised as more data arrives.
+
+                > ⏱ Even **a few seconds** of warning can save lives — enough time to
+                > drop/cover/hold on, stop elevators, slow trains, and shut down critical systems.
+                """
+            )
+
+        # --- Tab 2: Warning Time Calculator ---
+        with gr.TabItem("⏱ Warning Time"):
+            gr.Markdown("## Warning Time Calculator\nExplore how distance and detection delay affect the available warning time.")
+            with gr.Row():
+                with gr.Column(scale=1):
+                    dist_slider = gr.Slider(1, 500, value=100, step=1, label="Distance from Epicenter (km)")
+                    det_slider = gr.Slider(0, 20, value=5, step=0.5, label="Detection Delay (s)")
+                    calc_btn = gr.Button("Calculate", variant="primary")
+                    warning_md = gr.Markdown()
+                with gr.Column(scale=2):
+                    wave_plot = gr.Plot(label="Wave Propagation Diagram")
+            calc_btn.click(warning_time_callback, [dist_slider, det_slider], [wave_plot, warning_md])
+            demo.load(warning_time_callback, [dist_slider, det_slider], [wave_plot, warning_md])
+
+        # --- Tab 3: Blind Zone ---
+        with gr.TabItem("🔴 Blind Zone"):
+            gr.Markdown(
+                """
+                ## The Blind Zone
+
+                The **blind zone** is the area around the epicenter where the S-wave arrives
+                before an alert can be issued. Its radius depends on the system's detection delay.
+                """
+            )
+            with gr.Row():
+                with gr.Column(scale=1):
+                    bz_det_slider = gr.Slider(0, 20, value=5, step=0.5, label="Detection Delay (s)")
+                    bz_btn = gr.Button("Visualize", variant="primary")
+                    bz_md = gr.Markdown()
+                with gr.Column(scale=2):
+                    bz_plot = gr.Plot(label="Blind Zone Visualization")
+            bz_btn.click(blind_zone_callback, [bz_det_slider], [bz_plot, bz_md])
+            demo.load(blind_zone_callback, [bz_det_slider], [bz_plot, bz_md])
+
+        # --- Tab 4: Magnitude Estimation ---
+        with gr.TabItem("📏 Magnitude"):
+            gr.Markdown("## Magnitude Estimation\nSee how the recorded wave amplitude relates to earthquake magnitude using the classic Richter approach.")
+            with gr.Row():
+                with gr.Column(scale=1):
+                    amp_slider = gr.Slider(0.01, 100, value=10, step=0.1, label="Max Amplitude (mm)")
+                    mag_dist_slider = gr.Slider(1, 600, value=100, step=1, label="Epicentral Distance (km)")
+                    mag_btn = gr.Button("Estimate", variant="primary")
+                    mag_md = gr.Markdown()
+                with gr.Column(scale=2):
+                    mag_plot = gr.Plot(label="Magnitude vs Amplitude")
+            mag_btn.click(magnitude_callback, [amp_slider, mag_dist_slider], [mag_plot, mag_md])
+            demo.load(magnitude_callback, [amp_slider, mag_dist_slider], [mag_plot, mag_md])
+
+        # --- Tab 5: Intensity Scale ---
+        with gr.TabItem("💥 Intensity"):
+            gr.Markdown(
+                """
+                ## Seismic Intensity from PGA
+
+                **Peak Ground Acceleration (PGA)** measured in gal (cm/s²) can be converted
+                to a seismic intensity scale. Enter a PGA value to see the estimated intensity.
+                """
+            )
+            with gr.Row():
+                with gr.Column():
+                    pga_slider = gr.Slider(0.1, 1000, value=80, step=0.1, label="PGA (gal)")
+                    int_btn = gr.Button("Convert", variant="primary")
+                    int_md = gr.Markdown()
+            int_btn.click(intensity_callback, [pga_slider], [int_md])
+            demo.load(intensity_callback, [pga_slider], [int_md])
+
+    gr.Markdown(
+        """
+        ---
+        *Built for educational purposes. Wave velocities and formulas are simplified models.*
+        """
     )
 
 if __name__ == "__main__":
-    demo.launch()
+    demo.launch(theme=gr.themes.Soft())
