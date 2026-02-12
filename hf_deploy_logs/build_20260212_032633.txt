@@ -1,0 +1,738 @@
+data: {"data":"===== Build Queued at 2026-02-12 03:24:51 / Commit SHA: 0871204 =====\n","timestamp":"2026-02-12T03:24:51Z"}
+
+data: {"data":"--> FROM docker.io/library/python:3.13@sha256:498320f325ad70645e99ff676347987ca9117728784b8273fb6d25cc735ad9c0","timestamp":"2026-02-12T03:24:58.319Z"}
+
+data: {"data":"DONE 0.0s\n","timestamp":"2026-02-12T03:24:58.319Z"}
+
+data: {"data":"--> WORKDIR /app","timestamp":"2026-02-12T03:24:58.494Z"}
+
+data: {"data":"CACHED\n","timestamp":"2026-02-12T03:24:58.494Z"}
+
+data: {"data":"--> RUN apt-get update && apt-get install -y \tgit \tgit-lfs \tffmpeg \tlibsm6 \tlibxext6 \tcmake \trsync \tlibgl1 \t&& rm -rf /var/lib/apt/lists/* \t&& git lfs install","timestamp":"2026-02-12T03:24:58.494Z"}
+
+data: {"data":"CACHED\n","timestamp":"2026-02-12T03:24:58.494Z"}
+
+data: {"data":"--> RUN pip install --no-cache-dir pip -U &&     pip install --no-cache-dir     datasets     \"huggingface-hub>=0.30\" \"hf-transfer>=0.1.4\" \"protobuf<4\" \"click<8.1\"","timestamp":"2026-02-12T03:24:58.494Z"}
+
+data: {"data":"CACHED\n","timestamp":"2026-02-12T03:24:58.494Z"}
+
+data: {"data":"--> COPY --from=root / /","timestamp":"2026-02-12T03:24:58.494Z"}
+
+data: {"data":"CACHED\n","timestamp":"2026-02-12T03:24:58.494Z"}
+
+data: {"data":"--> RUN \tapt-get update && \tapt-get install -y curl && \tcurl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \tapt-get install -y nodejs && \trm -rf /var/lib/apt/lists/* && apt-get clean","timestamp":"2026-02-12T03:24:58.494Z"}
+
+data: {"data":"CACHED\n\n--> Restoring cache","timestamp":"2026-02-12T03:24:58.494Z"}
+
+data: {"data":"DONE 10.5s\n\n--> RUN --mount=target=/tmp/requirements.txt,source=requirements.txt     pip install --no-cache-dir -r /tmp/requirements.txt","timestamp":"2026-02-12T03:25:09.019Z"}
+
+data: {"data":"Collecting obspy (from -r /tmp/requirements.txt (line 1))","timestamp":"2026-02-12T03:25:09.212Z"}
+
+data: {"data":"  Downloading obspy-1.4.2.tar.gz (17.0 MB)","timestamp":"2026-02-12T03:25:09.393Z"}
+
+data: {"data":"     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 17.0/17.0 MB 60.3 MB/s  0:00:00","timestamp":"2026-02-12T03:25:09.686Z"}
+
+data: {"data":"  Installing build dependencies: started","timestamp":"2026-02-12T03:25:10.184Z"}
+
+data: {"data":"  Installing build dependencies: finished with status 'done'","timestamp":"2026-02-12T03:25:10.796Z"}
+
+data: {"data":"  Getting requirements to build wheel: started","timestamp":"2026-02-12T03:25:10.947Z"}
+
+data: {"data":"  Getting requirements to build wheel: finished with status 'done'","timestamp":"2026-02-12T03:25:11.243Z"}
+
+data: {"data":"  Preparing metadata (pyproject.toml): started","timestamp":"2026-02-12T03:25:11.394Z"}
+
+data: {"data":"  Preparing metadata (pyproject.toml): finished with status 'done'","timestamp":"2026-02-12T03:25:11.490Z"}
+
+data: {"data":"Collecting gradio (from -r /tmp/requirements.txt (line 2))","timestamp":"2026-02-12T03:25:11.677Z"}
+
+data: {"data":"  Downloading gradio-6.5.1-py3-none-any.whl.metadata (16 kB)","timestamp":"2026-02-12T03:25:11.677Z"}
+
+data: {"data":"Collecting matplotlib (from -r /tmp/requirements.txt (line 3))","timestamp":"2026-02-12T03:25:11.677Z"}
+
+data: {"data":"  Downloading matplotlib-3.10.8-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (52 kB)","timestamp":"2026-02-12T03:25:11.869Z"}
+
+data: {"data":"Requirement already satisfied: numpy in /usr/local/lib/python3.13/site-packages (from -r /tmp/requirements.txt (line 4)) (2.4.2)","timestamp":"2026-02-12T03:25:11.869Z"}
+
+data: {"data":"Collecting setuptools (from -r /tmp/requirements.txt (line 5))","timestamp":"2026-02-12T03:25:11.869Z"}
+
+data: {"data":"  Downloading setuptools-82.0.0-py3-none-any.whl.metadata (6.6 kB)","timestamp":"2026-02-12T03:25:11.869Z"}
+
+data: {"data":"Collecting scipy (from -r /tmp/requirements.txt (line 6))","timestamp":"2026-02-12T03:25:11.869Z"}
+
+data: {"data":"  Downloading scipy-1.17.0-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (62 kB)","timestamp":"2026-02-12T03:25:12.016Z"}
+
+data: {"data":"Collecting lxml (from -r /tmp/requirements.txt (line 7))","timestamp":"2026-02-12T03:25:12.016Z"}
+
+data: {"data":"  Downloading lxml-6.0.2-cp313-cp313-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl.metadata (3.6 kB)","timestamp":"2026-02-12T03:25:12.170Z"}
+
+data: {"data":"Collecting sqlalchemy<2 (from obspy->-r /tmp/requirements.txt (line 1))","timestamp":"2026-02-12T03:25:12.214Z"}
+
+data: {"data":"  Downloading sqlalchemy-1.4.54.tar.gz (8.5 MB)","timestamp":"2026-02-12T03:25:12.446Z"}
+
+data: {"data":"     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 8.5/8.5 MB 114.8 MB/s  0:00:00","timestamp":"2026-02-12T03:25:12.446Z"}
+
+data: {"data":"  Installing build dependencies: started","timestamp":"2026-02-12T03:25:12.805Z"}
+
+data: {"data":"  Installing build dependencies: finished with status 'done'","timestamp":"2026-02-12T03:25:13.432Z"}
+
+data: {"data":"  Getting requirements to build wheel: started","timestamp":"2026-02-12T03:25:13.583Z"}
+
+data: {"data":"  Getting requirements to build wheel: finished with status 'done'","timestamp":"2026-02-12T03:25:13.827Z"}
+
+data: {"data":"  Preparing metadata (pyproject.toml): started","timestamp":"2026-02-12T03:25:13.978Z"}
+
+data: {"data":"  Preparing metadata (pyproject.toml): finished with status 'done'","timestamp":"2026-02-12T03:25:14.093Z"}
+
+data: {"data":"Collecting decorator (from obspy->-r /tmp/requirements.txt (line 1))","timestamp":"2026-02-12T03:25:14.223Z"}
+
+data: {"data":"  Downloading decorator-5.2.1-py3-none-any.whl.metadata (3.9 kB)","timestamp":"2026-02-12T03:25:14.223Z"}
+
+data: {"data":"Requirement already satisfied: requests in /usr/local/lib/python3.13/site-packages (from obspy->-r /tmp/requirements.txt (line 1)) (2.32.5)","timestamp":"2026-02-12T03:25:14.223Z"}
+
+data: {"data":"Collecting greenlet!=0.4.17 (from sqlalchemy<2->obspy->-r /tmp/requirements.txt (line 1))","timestamp":"2026-02-12T03:25:14.223Z"}
+
+data: {"data":"  Downloading greenlet-3.3.1-cp313-cp313-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (3.7 kB)","timestamp":"2026-02-12T03:25:14.324Z"}
+
+data: {"data":"Collecting aiofiles<25.0,>=22.0 (from gradio->-r /tmp/requirements.txt (line 2))","timestamp":"2026-02-12T03:25:14.324Z"}
+
+data: {"data":"  Downloading aiofiles-24.1.0-py3-none-any.whl.metadata (10 kB)","timestamp":"2026-02-12T03:25:14.324Z"}
+
+data: {"data":"Requirement already satisfied: anyio<5.0,>=3.0 in /usr/local/lib/python3.13/site-packages (from gradio->-r /tmp/requirements.txt (line 2)) (4.12.1)","timestamp":"2026-02-12T03:25:14.324Z"}
+
+data: {"data":"Collecting audioop-lts<1.0 (from gradio->-r /tmp/requirements.txt (line 2))","timestamp":"2026-02-12T03:25:14.324Z"}
+
+data: {"data":"  Downloading audioop_lts-0.2.2-cp313-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (2.0 kB)","timestamp":"2026-02-12T03:25:14.324Z"}
+
+data: {"data":"Collecting brotli>=1.1.0 (from gradio->-r /tmp/requirements.txt (line 2))","timestamp":"2026-02-12T03:25:14.324Z"}
+
+data: {"data":"  Downloading brotli-1.2.0-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (6.1 kB)","timestamp":"2026-02-12T03:25:14.324Z"}
+
+data: {"data":"Collecting fastapi<1.0,>=0.115.2 (from gradio->-r /tmp/requirements.txt (line 2))","timestamp":"2026-02-12T03:25:14.428Z"}
+
+data: {"data":"  Downloading fastapi-0.128.8-py3-none-any.whl.metadata (30 kB)","timestamp":"2026-02-12T03:25:14.428Z"}
+
+data: {"data":"Collecting ffmpy (from gradio->-r /tmp/requirements.txt (line 2))","timestamp":"2026-02-12T03:25:14.428Z"}
+
+data: {"data":"  Downloading ffmpy-1.0.0-py3-none-any.whl.metadata (3.0 kB)","timestamp":"2026-02-12T03:25:14.428Z"}
+
+data: {"data":"Collecting gradio-client==2.0.3 (from gradio->-r /tmp/requirements.txt (line 2))","timestamp":"2026-02-12T03:25:14.428Z"}
+
+data: {"data":"  Downloading gradio_client-2.0.3-py3-none-any.whl.metadata (7.1 kB)","timestamp":"2026-02-12T03:25:14.428Z"}
+
+data: {"data":"Collecting groovy~=0.1 (from gradio->-r /tmp/requirements.txt (line 2))","timestamp":"2026-02-12T03:25:14.428Z"}
+
+data: {"data":"  Downloading groovy-0.1.2-py3-none-any.whl.metadata (6.1 kB)","timestamp":"2026-02-12T03:25:14.428Z"}
+
+data: {"data":"Requirement already satisfied: httpx<1.0,>=0.24.1 in /usr/local/lib/python3.13/site-packages (from gradio->-r /tmp/requirements.txt (line 2)) (0.28.1)","timestamp":"2026-02-12T03:25:14.428Z"}
+
+data: {"data":"Requirement already satisfied: huggingface-hub<2.0,>=0.33.5 in /usr/local/lib/python3.13/site-packages (from gradio->-r /tmp/requirements.txt (line 2)) (1.4.1)","timestamp":"2026-02-12T03:25:14.428Z"}
+
+data: {"data":"Collecting jinja2<4.0 (from gradio->-r /tmp/requirements.txt (line 2))","timestamp":"2026-02-12T03:25:14.428Z"}
+
+data: {"data":"  Downloading jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)","timestamp":"2026-02-12T03:25:14.624Z"}
+
+data: {"data":"Collecting markupsafe<4.0,>=2.0 (from gradio->-r /tmp/requirements.txt (line 2))","timestamp":"2026-02-12T03:25:14.624Z"}
+
+data: {"data":"  Downloading markupsafe-3.0.3-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.7 kB)","timestamp":"2026-02-12T03:25:14.624Z"}
+
+data: {"data":"Collecting orjson~=3.0 (from gradio->-r /tmp/requirements.txt (line 2))","timestamp":"2026-02-12T03:25:14.690Z"}
+
+data: {"data":"  Downloading orjson-3.11.7-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (41 kB)","timestamp":"2026-02-12T03:25:14.826Z"}
+
+data: {"data":"Requirement already satisfied: packaging in /usr/local/lib/python3.13/site-packages (from gradio->-r /tmp/requirements.txt (line 2)) (26.0)","timestamp":"2026-02-12T03:25:14.826Z"}
+
+data: {"data":"Requirement already satisfied: pandas<4.0,>=1.0 in /usr/local/lib/python3.13/site-packages (from gradio->-r /tmp/requirements.txt (line 2)) (3.0.0)","timestamp":"2026-02-12T03:25:14.826Z"}
+
+data: {"data":"Collecting pillow<13.0,>=8.0 (from gradio->-r /tmp/requirements.txt (line 2))","timestamp":"2026-02-12T03:25:14.826Z"}
+
+data: {"data":"  Downloading pillow-12.1.1-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (8.8 kB)","timestamp":"2026-02-12T03:25:14.930Z"}
+
+data: {"data":"Collecting pydantic<=3.0,>=2.0 (from gradio->-r /tmp/requirements.txt (line 2))","timestamp":"2026-02-12T03:25:14.930Z"}
+
+data: {"data":"  Downloading pydantic-2.12.5-py3-none-any.whl.metadata (90 kB)","timestamp":"2026-02-12T03:25:14.930Z"}
+
+data: {"data":"Collecting pydub (from gradio->-r /tmp/requirements.txt (line 2))","timestamp":"2026-02-12T03:25:14.930Z"}
+
+data: {"data":"  Downloading pydub-0.25.1-py2.py3-none-any.whl.metadata (1.4 kB)","timestamp":"2026-02-12T03:25:15.039Z"}
+
+data: {"data":"Collecting python-multipart>=0.0.18 (from gradio->-r /tmp/requirements.txt (line 2))","timestamp":"2026-02-12T03:25:15.039Z"}
+
+data: {"data":"  Downloading python_multipart-0.0.22-py3-none-any.whl.metadata (1.8 kB)","timestamp":"2026-02-12T03:25:15.039Z"}
+
+data: {"data":"Collecting pytz>=2017.2 (from gradio->-r /tmp/requirements.txt (line 2))","timestamp":"2026-02-12T03:25:15.039Z"}
+
+data: {"data":"  Downloading pytz-2025.2-py2.py3-none-any.whl.metadata (22 kB)","timestamp":"2026-02-12T03:25:15.039Z"}
+
+data: {"data":"Requirement already satisfied: pyyaml<7.0,>=5.0 in /usr/local/lib/python3.13/site-packages (from gradio->-r /tmp/requirements.txt (line 2)) (6.0.3)","timestamp":"2026-02-12T03:25:15.039Z"}
+
+data: {"data":"Collecting safehttpx<0.2.0,>=0.1.7 (from gradio->-r /tmp/requirements.txt (line 2))","timestamp":"2026-02-12T03:25:15.039Z"}
+
+data: {"data":"  Downloading safehttpx-0.1.7-py3-none-any.whl.metadata (4.2 kB)","timestamp":"2026-02-12T03:25:15.039Z"}
+
+data: {"data":"Collecting semantic-version~=2.0 (from gradio->-r /tmp/requirements.txt (line 2))","timestamp":"2026-02-12T03:25:15.039Z"}
+
+data: {"data":"  Downloading semantic_version-2.10.0-py2.py3-none-any.whl.metadata (9.7 kB)","timestamp":"2026-02-12T03:25:15.039Z"}
+
+data: {"data":"Collecting starlette<1.0,>=0.40.0 (from gradio->-r /tmp/requirements.txt (line 2))","timestamp":"2026-02-12T03:25:15.039Z"}
+
+data: {"data":"  Downloading starlette-0.52.1-py3-none-any.whl.metadata (6.3 kB)","timestamp":"2026-02-12T03:25:15.039Z"}
+
+data: {"data":"Collecting tomlkit<0.14.0,>=0.12.0 (from gradio->-r /tmp/requirements.txt (line 2))","timestamp":"2026-02-12T03:25:15.039Z"}
+
+data: {"data":"  Downloading tomlkit-0.13.3-py3-none-any.whl.metadata (2.8 kB)","timestamp":"2026-02-12T03:25:15.281Z"}
+
+data: {"data":"Requirement already satisfied: typer<1.0,>=0.12 in /usr/local/lib/python3.13/site-packages (from gradio->-r /tmp/requirements.txt (line 2)) (0.23.0)","timestamp":"2026-02-12T03:25:15.281Z"}
+
+data: {"data":"Requirement already satisfied: typing-extensions~=4.0 in /usr/local/lib/python3.13/site-packages (from gradio->-r /tmp/requirements.txt (line 2)) (4.15.0)","timestamp":"2026-02-12T03:25:15.281Z"}
+
+data: {"data":"Collecting uvicorn>=0.14.0 (from gradio->-r /tmp/requirements.txt (line 2))","timestamp":"2026-02-12T03:25:15.281Z"}
+
+data: {"data":"  Downloading uvicorn-0.40.0-py3-none-any.whl.metadata (6.7 kB)","timestamp":"2026-02-12T03:25:15.281Z"}
+
+data: {"data":"Requirement already satisfied: fsspec in /usr/local/lib/python3.13/site-packages (from gradio-client==2.0.3->gradio->-r /tmp/requirements.txt (line 2)) (2025.10.0)","timestamp":"2026-02-12T03:25:15.281Z"}
+
+data: {"data":"Requirement already satisfied: idna>=2.8 in /usr/local/lib/python3.13/site-packages (from anyio<5.0,>=3.0->gradio->-r /tmp/requirements.txt (line 2)) (3.11)","timestamp":"2026-02-12T03:25:15.281Z"}
+
+data: {"data":"Collecting typing-inspection>=0.4.2 (from fastapi<1.0,>=0.115.2->gradio->-r /tmp/requirements.txt (line 2))","timestamp":"2026-02-12T03:25:15.281Z"}
+
+data: {"data":"  Downloading typing_inspection-0.4.2-py3-none-any.whl.metadata (2.6 kB)","timestamp":"2026-02-12T03:25:15.281Z"}
+
+data: {"data":"Requirement already satisfied: annotated-doc>=0.0.2 in /usr/local/lib/python3.13/site-packages (from fastapi<1.0,>=0.115.2->gradio->-r /tmp/requirements.txt (line 2)) (0.0.4)","timestamp":"2026-02-12T03:25:15.281Z"}
+
+data: {"data":"Requirement already satisfied: certifi in /usr/local/lib/python3.13/site-packages (from httpx<1.0,>=0.24.1->gradio->-r /tmp/requirements.txt (line 2)) (2026.1.4)","timestamp":"2026-02-12T03:25:15.281Z"}
+
+data: {"data":"Requirement already satisfied: httpcore==1.* in /usr/local/lib/python3.13/site-packages (from httpx<1.0,>=0.24.1->gradio->-r /tmp/requirements.txt (line 2)) (1.0.9)","timestamp":"2026-02-12T03:25:15.281Z"}
+
+data: {"data":"Requirement already satisfied: h11>=0.16 in /usr/local/lib/python3.13/site-packages (from httpcore==1.*->httpx<1.0,>=0.24.1->gradio->-r /tmp/requirements.txt (line 2)) (0.16.0)","timestamp":"2026-02-12T03:25:15.281Z"}
+
+data: {"data":"Requirement already satisfied: filelock in /usr/local/lib/python3.13/site-packages (from huggingface-hub<2.0,>=0.33.5->gradio->-r /tmp/requirements.txt (line 2)) (3.20.3)","timestamp":"2026-02-12T03:25:15.281Z"}
+
+data: {"data":"Requirement already satisfied: hf-xet<2.0.0,>=1.2.0 in /usr/local/lib/python3.13/site-packages (from huggingface-hub<2.0,>=0.33.5->gradio->-r /tmp/requirements.txt (line 2)) (1.2.0)","timestamp":"2026-02-12T03:25:15.281Z"}
+
+data: {"data":"Requirement already satisfied: shellingham in /usr/local/lib/python3.13/site-packages (from huggingface-hub<2.0,>=0.33.5->gradio->-r /tmp/requirements.txt (line 2)) (1.5.4)","timestamp":"2026-02-12T03:25:15.281Z"}
+
+data: {"data":"Requirement already satisfied: tqdm>=4.42.1 in /usr/local/lib/python3.13/site-packages (from huggingface-hub<2.0,>=0.33.5->gradio->-r /tmp/requirements.txt (line 2)) (4.67.3)","timestamp":"2026-02-12T03:25:15.281Z"}
+
+data: {"data":"Requirement already satisfied: typer-slim in /usr/local/lib/python3.13/site-packages (from huggingface-hub<2.0,>=0.33.5->gradio->-r /tmp/requirements.txt (line 2)) (0.23.0)","timestamp":"2026-02-12T03:25:15.281Z"}
+
+data: {"data":"Requirement already satisfied: python-dateutil>=2.8.2 in /usr/local/lib/python3.13/site-packages (from pandas<4.0,>=1.0->gradio->-r /tmp/requirements.txt (line 2)) (2.9.0.post0)","timestamp":"2026-02-12T03:25:15.281Z"}
+
+data: {"data":"Collecting annotated-types>=0.6.0 (from pydantic<=3.0,>=2.0->gradio->-r /tmp/requirements.txt (line 2))","timestamp":"2026-02-12T03:25:15.281Z"}
+
+data: {"data":"  Downloading annotated_types-0.7.0-py3-none-any.whl.metadata (15 kB)","timestamp":"2026-02-12T03:25:15.281Z"}
+
+data: {"data":"Collecting pydantic-core==2.41.5 (from pydantic<=3.0,>=2.0->gradio->-r /tmp/requirements.txt (line 2))","timestamp":"2026-02-12T03:25:15.606Z"}
+
+data: {"data":"  Downloading pydantic_core-2.41.5-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (7.3 kB)","timestamp":"2026-02-12T03:25:15.795Z"}
+
+data: {"data":"Requirement already satisfied: click>=8.0.0 in /usr/local/lib/python3.13/site-packages (from typer<1.0,>=0.12->gradio->-r /tmp/requirements.txt (line 2)) (8.0.4)","timestamp":"2026-02-12T03:25:15.795Z"}
+
+data: {"data":"Requirement already satisfied: rich>=10.11.0 in /usr/local/lib/python3.13/site-packages (from typer<1.0,>=0.12->gradio->-r /tmp/requirements.txt (line 2)) (14.3.2)","timestamp":"2026-02-12T03:25:15.795Z"}
+
+data: {"data":"Collecting contourpy>=1.0.1 (from matplotlib->-r /tmp/requirements.txt (line 3))","timestamp":"2026-02-12T03:25:15.795Z"}
+
+data: {"data":"  Downloading contourpy-1.3.3-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (5.5 kB)","timestamp":"2026-02-12T03:25:15.795Z"}
+
+data: {"data":"Collecting cycler>=0.10 (from matplotlib->-r /tmp/requirements.txt (line 3))","timestamp":"2026-02-12T03:25:15.795Z"}
+
+data: {"data":"  Downloading cycler-0.12.1-py3-none-any.whl.metadata (3.8 kB)","timestamp":"2026-02-12T03:25:15.795Z"}
+
+data: {"data":"Collecting fonttools>=4.22.0 (from matplotlib->-r /tmp/requirements.txt (line 3))","timestamp":"2026-02-12T03:25:15.795Z"}
+
+data: {"data":"  Downloading fonttools-4.61.1-cp313-cp313-manylinux1_x86_64.manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_5_x86_64.whl.metadata (114 kB)","timestamp":"2026-02-12T03:25:15.920Z"}
+
+data: {"data":"Collecting kiwisolver>=1.3.1 (from matplotlib->-r /tmp/requirements.txt (line 3))","timestamp":"2026-02-12T03:25:15.920Z"}
+
+data: {"data":"  Downloading kiwisolver-1.4.9-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (6.3 kB)","timestamp":"2026-02-12T03:25:15.920Z"}
+
+data: {"data":"Collecting pyparsing>=3 (from matplotlib->-r /tmp/requirements.txt (line 3))","timestamp":"2026-02-12T03:25:15.920Z"}
+
+data: {"data":"  Downloading pyparsing-3.3.2-py3-none-any.whl.metadata (5.8 kB)","timestamp":"2026-02-12T03:25:15.920Z"}
+
+data: {"data":"Requirement already satisfied: six>=1.5 in /usr/local/lib/python3.13/site-packages (from python-dateutil>=2.8.2->pandas<4.0,>=1.0->gradio->-r /tmp/requirements.txt (line 2)) (1.17.0)","timestamp":"2026-02-12T03:25:15.920Z"}
+
+data: {"data":"Requirement already satisfied: markdown-it-py>=2.2.0 in /usr/local/lib/python3.13/site-packages (from rich>=10.11.0->typer<1.0,>=0.12->gradio->-r /tmp/requirements.txt (line 2)) (4.0.0)","timestamp":"2026-02-12T03:25:16.110Z"}
+
+data: {"data":"Requirement already satisfied: pygments<3.0.0,>=2.13.0 in /usr/local/lib/python3.13/site-packages (from rich>=10.11.0->typer<1.0,>=0.12->gradio->-r /tmp/requirements.txt (line 2)) (2.19.2)","timestamp":"2026-02-12T03:25:16.110Z"}
+
+data: {"data":"Requirement already satisfied: mdurl~=0.1 in /usr/local/lib/python3.13/site-packages (from markdown-it-py>=2.2.0->rich>=10.11.0->typer<1.0,>=0.12->gradio->-r /tmp/requirements.txt (line 2)) (0.1.2)","timestamp":"2026-02-12T03:25:16.110Z"}
+
+data: {"data":"Requirement already satisfied: charset_normalizer<4,>=2 in /usr/local/lib/python3.13/site-packages (from requests->obspy->-r /tmp/requirements.txt (line 1)) (3.4.4)","timestamp":"2026-02-12T03:25:16.110Z"}
+
+data: {"data":"Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.13/site-packages (from requests->obspy->-r /tmp/requirements.txt (line 1)) (2.6.3)","timestamp":"2026-02-12T03:25:16.110Z"}
+
+data: {"data":"Downloading gradio-6.5.1-py3-none-any.whl (24.2 MB)","timestamp":"2026-02-12T03:25:16.110Z"}
+
+data: {"data":"   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 24.2/24.2 MB 155.7 MB/s  0:00:00","timestamp":"2026-02-12T03:25:16.116Z"}
+
+data: {"data":"Downloading gradio_client-2.0.3-py3-none-any.whl (55 kB)","timestamp":"2026-02-12T03:25:16.219Z"}
+
+data: {"data":"Downloading aiofiles-24.1.0-py3-none-any.whl (15 kB)","timestamp":"2026-02-12T03:25:16.219Z"}
+
+data: {"data":"Downloading audioop_lts-0.2.2-cp313-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (85 kB)","timestamp":"2026-02-12T03:25:16.219Z"}
+
+data: {"data":"Downloading fastapi-0.128.8-py3-none-any.whl (103 kB)","timestamp":"2026-02-12T03:25:16.219Z"}
+
+data: {"data":"Downloading groovy-0.1.2-py3-none-any.whl (14 kB)","timestamp":"2026-02-12T03:25:16.219Z"}
+
+data: {"data":"Downloading jinja2-3.1.6-py3-none-any.whl (134 kB)","timestamp":"2026-02-12T03:25:16.219Z"}
+
+data: {"data":"Downloading markupsafe-3.0.3-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (22 kB)","timestamp":"2026-02-12T03:25:16.219Z"}
+
+data: {"data":"Downloading orjson-3.11.7-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (133 kB)","timestamp":"2026-02-12T03:25:16.219Z"}
+
+data: {"data":"Downloading pillow-12.1.1-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (7.0 MB)","timestamp":"2026-02-12T03:25:16.219Z"}
+
+data: {"data":"   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 7.0/7.0 MB 171.9 MB/s  0:00:00","timestamp":"2026-02-12T03:25:16.219Z"}
+
+data: {"data":"Downloading pydantic-2.12.5-py3-none-any.whl (463 kB)","timestamp":"2026-02-12T03:25:16.219Z"}
+
+data: {"data":"Downloading pydantic_core-2.41.5-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.1 MB)","timestamp":"2026-02-12T03:25:16.219Z"}
+
+data: {"data":"   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 452.3 MB/s  0:00:00","timestamp":"2026-02-12T03:25:16.320Z"}
+
+data: {"data":"Downloading safehttpx-0.1.7-py3-none-any.whl (9.0 kB)","timestamp":"2026-02-12T03:25:16.320Z"}
+
+data: {"data":"Downloading semantic_version-2.10.0-py2.py3-none-any.whl (15 kB)","timestamp":"2026-02-12T03:25:16.320Z"}
+
+data: {"data":"Downloading starlette-0.52.1-py3-none-any.whl (74 kB)","timestamp":"2026-02-12T03:25:16.320Z"}
+
+data: {"data":"Downloading tomlkit-0.13.3-py3-none-any.whl (38 kB)","timestamp":"2026-02-12T03:25:16.320Z"}
+
+data: {"data":"Downloading matplotlib-3.10.8-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (8.7 MB)","timestamp":"2026-02-12T03:25:16.320Z"}
+
+data: {"data":"   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 8.7/8.7 MB 133.4 MB/s  0:00:00","timestamp":"2026-02-12T03:25:16.320Z"}
+
+data: {"data":"Downloading setuptools-82.0.0-py3-none-any.whl (1.0 MB)","timestamp":"2026-02-12T03:25:16.320Z"}
+
+data: {"data":"   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.0/1.0 MB 822.9 MB/s  0:00:00","timestamp":"2026-02-12T03:25:16.475Z"}
+
+data: {"data":"Downloading scipy-1.17.0-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (35.0 MB)","timestamp":"2026-02-12T03:25:16.475Z"}
+
+data: {"data":"   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 35.0/35.0 MB 133.8 MB/s  0:00:00","timestamp":"2026-02-12T03:25:16.700Z"}
+
+data: {"data":"Downloading lxml-6.0.2-cp313-cp313-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl (5.2 MB)","timestamp":"2026-02-12T03:25:16.701Z"}
+
+data: {"data":"   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.2/5.2 MB 127.4 MB/s  0:00:00","timestamp":"2026-02-12T03:25:16.701Z"}
+
+data: {"data":"Downloading annotated_types-0.7.0-py3-none-any.whl (13 kB)","timestamp":"2026-02-12T03:25:16.701Z"}
+
+data: {"data":"Downloading brotli-1.2.0-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (1.4 MB)","timestamp":"2026-02-12T03:25:16.701Z"}
+
+data: {"data":"   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.4/1.4 MB 180.5 MB/s  0:00:00","timestamp":"2026-02-12T03:25:16.701Z"}
+
+data: {"data":"Downloading contourpy-1.3.3-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (362 kB)","timestamp":"2026-02-12T03:25:16.701Z"}
+
+data: {"data":"Downloading cycler-0.12.1-py3-none-any.whl (8.3 kB)","timestamp":"2026-02-12T03:25:16.701Z"}
+
+data: {"data":"Downloading fonttools-4.61.1-cp313-cp313-manylinux1_x86_64.manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_5_x86_64.whl (4.9 MB)","timestamp":"2026-02-12T03:25:16.701Z"}
+
+data: {"data":"   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.9/4.9 MB 223.0 MB/s  0:00:00","timestamp":"2026-02-12T03:25:16.890Z"}
+
+data: {"data":"Downloading greenlet-3.3.1-cp313-cp313-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (612 kB)","timestamp":"2026-02-12T03:25:16.890Z"}
+
+data: {"data":"   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 612.9/612.9 kB 386.0 MB/s  0:00:00","timestamp":"2026-02-12T03:25:16.890Z"}
+
+data: {"data":"Downloading kiwisolver-1.4.9-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (1.5 MB)","timestamp":"2026-02-12T03:25:16.890Z"}
+
+data: {"data":"   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.5/1.5 MB 155.5 MB/s  0:00:00","timestamp":"2026-02-12T03:25:16.890Z"}
+
+data: {"data":"Downloading pyparsing-3.3.2-py3-none-any.whl (122 kB)","timestamp":"2026-02-12T03:25:16.890Z"}
+
+data: {"data":"Downloading python_multipart-0.0.22-py3-none-any.whl (24 kB)","timestamp":"2026-02-12T03:25:16.890Z"}
+
+data: {"data":"Downloading pytz-2025.2-py2.py3-none-any.whl (509 kB)","timestamp":"2026-02-12T03:25:16.890Z"}
+
+data: {"data":"Downloading typing_inspection-0.4.2-py3-none-any.whl (14 kB)","timestamp":"2026-02-12T03:25:16.890Z"}
+
+data: {"data":"Downloading uvicorn-0.40.0-py3-none-any.whl (68 kB)","timestamp":"2026-02-12T03:25:16.890Z"}
+
+data: {"data":"Downloading decorator-5.2.1-py3-none-any.whl (9.2 kB)","timestamp":"2026-02-12T03:25:16.890Z"}
+
+data: {"data":"Downloading ffmpy-1.0.0-py3-none-any.whl (5.6 kB)","timestamp":"2026-02-12T03:25:16.890Z"}
+
+data: {"data":"Downloading pydub-0.25.1-py2.py3-none-any.whl (32 kB)","timestamp":"2026-02-12T03:25:16.890Z"}
+
+data: {"data":"Building wheels for collected packages: obspy, sqlalchemy","timestamp":"2026-02-12T03:25:16.890Z"}
+
+data: {"data":"  Building wheel for obspy (pyproject.toml): started","timestamp":"2026-02-12T03:25:17.041Z"}
+
+data: {"data":"  Building wheel for obspy (pyproject.toml): finished with status 'done'","timestamp":"2026-02-12T03:25:27.964Z"}
+
+data: {"data":"  Created wheel for obspy: filename=obspy-1.4.2-cp313-cp313-linux_x86_64.whl size=14496055 sha256=7d7a218d5d19d7ac449bba45fa0d4213c80a247c7042fa98a3f71480c61d5d8a","timestamp":"2026-02-12T03:25:28.139Z"}
+
+data: {"data":"  Stored in directory: /tmp/pip-ephem-wheel-cache-nyeo3qdt/wheels/ca/09/fb/1af23e7f8c3c77461f52c4d2ff69006ea89bb4b9c880ce92e9","timestamp":"2026-02-12T03:25:28.139Z"}
+
+data: {"data":"  Building wheel for sqlalchemy (pyproject.toml): started","timestamp":"2026-02-12T03:25:28.139Z"}
+
+data: {"data":"  Building wheel for sqlalchemy (pyproject.toml): finished with status 'done'","timestamp":"2026-02-12T03:25:29.233Z"}
+
+data: {"data":"  Created wheel for sqlalchemy: filename=sqlalchemy-1.4.54-cp313-cp313-linux_x86_64.whl size=1625877 sha256=815c9aab4ab1858b493ae946aed5f3e0e09c284e5132f83a6fdae6d0060997a3","timestamp":"2026-02-12T03:25:29.390Z"}
+
+data: {"data":"  Stored in directory: /tmp/pip-ephem-wheel-cache-nyeo3qdt/wheels/66/d4/be/4c07d30f4e85a3d3789094f906c6050425b0183674c46548d0","timestamp":"2026-02-12T03:25:29.390Z"}
+
+data: {"data":"Successfully built obspy sqlalchemy","timestamp":"2026-02-12T03:25:29.390Z"}
+
+data: {"data":"Installing collected packages: pytz, pydub, brotli, uvicorn, typing-inspection, tomlkit, setuptools, semantic-version, scipy, python-multipart, pyparsing, pydantic-core, pillow, orjson, markupsafe, lxml, kiwisolver, groovy, greenlet, fonttools, ffmpy, decorator, cycler, contourpy, audioop-lts, annotated-types, aiofiles, starlette, sqlalchemy, pydantic, matplotlib, jinja2, safehttpx, obspy, fastapi, gradio-client, gradio","timestamp":"2026-02-12T03:25:29.393Z"}
+
+data: {"data":"","timestamp":"2026-02-12T03:25:41.360Z"}
+
+data: {"data":"Successfully installed aiofiles-24.1.0 annotated-types-0.7.0 audioop-lts-0.2.2 brotli-1.2.0 contourpy-1.3.3 cycler-0.12.1 decorator-5.2.1 fastapi-0.128.8 ffmpy-1.0.0 fonttools-4.61.1 gradio-6.5.1 gradio-client-2.0.3 greenlet-3.3.1 groovy-0.1.2 jinja2-3.1.6 kiwisolver-1.4.9 lxml-6.0.2 markupsafe-3.0.3 matplotlib-3.10.8 obspy-1.4.2 orjson-3.11.7 pillow-12.1.1 pydantic-2.12.5 pydantic-core-2.41.5 pydub-0.25.1 pyparsing-3.3.2 python-multipart-0.0.22 pytz-2025.2 safehttpx-0.1.7 scipy-1.17.0 semantic-version-2.10.0 setuptools-82.0.0 sqlalchemy-1.4.54 starlette-0.52.1 tomlkit-0.13.3 typing-inspection-0.4.2 uvicorn-0.40.0","timestamp":"2026-02-12T03:25:41.517Z"}
+
+data: {"data":"WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.","timestamp":"2026-02-12T03:25:41.517Z"}
+
+data: {"data":"DONE 33.7s\n","timestamp":"2026-02-12T03:25:42.520Z"}
+
+data: {"data":"--> RUN pip install --no-cache-dir     gradio[oauth,mcp]==5.50.0     \"uvicorn>=0.14.0\" \"websockets>=10.4\"     spaces","timestamp":"2026-02-12T03:25:42.671Z"}
+
+data: {"data":"Collecting gradio==5.50.0 (from gradio[mcp,oauth]==5.50.0)","timestamp":"2026-02-12T03:25:43.040Z"}
+
+data: {"data":"  Downloading gradio-5.50.0-py3-none-any.whl.metadata (16 kB)","timestamp":"2026-02-12T03:25:43.151Z"}
+
+data: {"data":"Requirement already satisfied: uvicorn>=0.14.0 in /usr/local/lib/python3.13/site-packages (0.40.0)","timestamp":"2026-02-12T03:25:43.151Z"}
+
+data: {"data":"Collecting websockets>=10.4","timestamp":"2026-02-12T03:25:43.151Z"}
+
+data: {"data":"  Downloading websockets-16.0-cp313-cp313-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (6.8 kB)","timestamp":"2026-02-12T03:25:43.296Z"}
+
+data: {"data":"Collecting spaces","timestamp":"2026-02-12T03:25:43.296Z"}
+
+data: {"data":"  Downloading spaces-0.47.0-py3-none-any.whl.metadata (1.0 kB)","timestamp":"2026-02-12T03:25:43.296Z"}
+
+data: {"data":"Requirement already satisfied: aiofiles<25.0,>=22.0 in /usr/local/lib/python3.13/site-packages (from gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (24.1.0)","timestamp":"2026-02-12T03:25:43.296Z"}
+
+data: {"data":"Requirement already satisfied: anyio<5.0,>=3.0 in /usr/local/lib/python3.13/site-packages (from gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (4.12.1)","timestamp":"2026-02-12T03:25:43.296Z"}
+
+data: {"data":"Requirement already satisfied: audioop-lts<1.0 in /usr/local/lib/python3.13/site-packages (from gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (0.2.2)","timestamp":"2026-02-12T03:25:43.296Z"}
+
+data: {"data":"Requirement already satisfied: brotli>=1.1.0 in /usr/local/lib/python3.13/site-packages (from gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (1.2.0)","timestamp":"2026-02-12T03:25:43.296Z"}
+
+data: {"data":"Requirement already satisfied: fastapi<1.0,>=0.115.2 in /usr/local/lib/python3.13/site-packages (from gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (0.128.8)","timestamp":"2026-02-12T03:25:43.296Z"}
+
+data: {"data":"Requirement already satisfied: ffmpy in /usr/local/lib/python3.13/site-packages (from gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (1.0.0)","timestamp":"2026-02-12T03:25:43.296Z"}
+
+data: {"data":"Collecting gradio-client==1.14.0 (from gradio==5.50.0->gradio[mcp,oauth]==5.50.0)","timestamp":"2026-02-12T03:25:43.296Z"}
+
+data: {"data":"  Downloading gradio_client-1.14.0-py3-none-any.whl.metadata (7.1 kB)","timestamp":"2026-02-12T03:25:43.296Z"}
+
+data: {"data":"Requirement already satisfied: groovy~=0.1 in /usr/local/lib/python3.13/site-packages (from gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (0.1.2)","timestamp":"2026-02-12T03:25:43.296Z"}
+
+data: {"data":"Requirement already satisfied: httpx<1.0,>=0.24.1 in /usr/local/lib/python3.13/site-packages (from gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (0.28.1)","timestamp":"2026-02-12T03:25:43.296Z"}
+
+data: {"data":"Requirement already satisfied: huggingface-hub<2.0,>=0.33.5 in /usr/local/lib/python3.13/site-packages (from gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (1.4.1)","timestamp":"2026-02-12T03:25:43.296Z"}
+
+data: {"data":"Requirement already satisfied: jinja2<4.0 in /usr/local/lib/python3.13/site-packages (from gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (3.1.6)","timestamp":"2026-02-12T03:25:43.296Z"}
+
+data: {"data":"Requirement already satisfied: markupsafe<4.0,>=2.0 in /usr/local/lib/python3.13/site-packages (from gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (3.0.3)","timestamp":"2026-02-12T03:25:43.296Z"}
+
+data: {"data":"Requirement already satisfied: numpy<3.0,>=1.0 in /usr/local/lib/python3.13/site-packages (from gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (2.4.2)","timestamp":"2026-02-12T03:25:43.296Z"}
+
+data: {"data":"Requirement already satisfied: orjson~=3.0 in /usr/local/lib/python3.13/site-packages (from gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (3.11.7)","timestamp":"2026-02-12T03:25:43.296Z"}
+
+data: {"data":"Requirement already satisfied: packaging in /usr/local/lib/python3.13/site-packages (from gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (26.0)","timestamp":"2026-02-12T03:25:43.296Z"}
+
+data: {"data":"Collecting pandas<3.0,>=1.0 (from gradio==5.50.0->gradio[mcp,oauth]==5.50.0)","timestamp":"2026-02-12T03:25:43.296Z"}
+
+data: {"data":"  Downloading pandas-2.3.3-cp313-cp313-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (91 kB)","timestamp":"2026-02-12T03:25:43.451Z"}
+
+data: {"data":"Collecting pillow<12.0,>=8.0 (from gradio==5.50.0->gradio[mcp,oauth]==5.50.0)","timestamp":"2026-02-12T03:25:43.478Z"}
+
+data: {"data":"  Downloading pillow-11.3.0-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (9.0 kB)","timestamp":"2026-02-12T03:25:43.579Z"}
+
+data: {"data":"Collecting pydantic<=2.12.3,>=2.0 (from gradio==5.50.0->gradio[mcp,oauth]==5.50.0)","timestamp":"2026-02-12T03:25:43.579Z"}
+
+data: {"data":"  Downloading pydantic-2.12.3-py3-none-any.whl.metadata (87 kB)","timestamp":"2026-02-12T03:25:43.579Z"}
+
+data: {"data":"Requirement already satisfied: pydub in /usr/local/lib/python3.13/site-packages (from gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (0.25.1)","timestamp":"2026-02-12T03:25:43.735Z"}
+
+data: {"data":"Requirement already satisfied: python-multipart>=0.0.18 in /usr/local/lib/python3.13/site-packages (from gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (0.0.22)","timestamp":"2026-02-12T03:25:43.735Z"}
+
+data: {"data":"Requirement already satisfied: pyyaml<7.0,>=5.0 in /usr/local/lib/python3.13/site-packages (from gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (6.0.3)","timestamp":"2026-02-12T03:25:43.735Z"}
+
+data: {"data":"Collecting ruff>=0.9.3 (from gradio==5.50.0->gradio[mcp,oauth]==5.50.0)","timestamp":"2026-02-12T03:25:43.881Z"}
+
+data: {"data":"  Downloading ruff-0.15.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (26 kB)","timestamp":"2026-02-12T03:25:43.992Z"}
+
+data: {"data":"Requirement already satisfied: safehttpx<0.2.0,>=0.1.6 in /usr/local/lib/python3.13/site-packages (from gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (0.1.7)","timestamp":"2026-02-12T03:25:43.992Z"}
+
+data: {"data":"Requirement already satisfied: semantic-version~=2.0 in /usr/local/lib/python3.13/site-packages (from gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (2.10.0)","timestamp":"2026-02-12T03:25:43.992Z"}
+
+data: {"data":"Requirement already satisfied: starlette<1.0,>=0.40.0 in /usr/local/lib/python3.13/site-packages (from gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (0.52.1)","timestamp":"2026-02-12T03:25:43.992Z"}
+
+data: {"data":"Requirement already satisfied: tomlkit<0.14.0,>=0.12.0 in /usr/local/lib/python3.13/site-packages (from gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (0.13.3)","timestamp":"2026-02-12T03:25:43.992Z"}
+
+data: {"data":"Requirement already satisfied: typer<1.0,>=0.12 in /usr/local/lib/python3.13/site-packages (from gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (0.23.0)","timestamp":"2026-02-12T03:25:43.992Z"}
+
+data: {"data":"Requirement already satisfied: typing-extensions~=4.0 in /usr/local/lib/python3.13/site-packages (from gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (4.15.0)","timestamp":"2026-02-12T03:25:43.992Z"}
+
+data: {"data":"Requirement already satisfied: fsspec in /usr/local/lib/python3.13/site-packages (from gradio-client==1.14.0->gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (2025.10.0)","timestamp":"2026-02-12T03:25:43.992Z"}
+
+data: {"data":"Collecting websockets>=10.4","timestamp":"2026-02-12T03:25:43.992Z"}
+
+data: {"data":"  Downloading websockets-15.0.1-cp313-cp313-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.8 kB)","timestamp":"2026-02-12T03:25:43.992Z"}
+
+data: {"data":"Collecting mcp==1.10.1 (from gradio[mcp,oauth]==5.50.0)","timestamp":"2026-02-12T03:25:43.992Z"}
+
+data: {"data":"  Downloading mcp-1.10.1-py3-none-any.whl.metadata (40 kB)","timestamp":"2026-02-12T03:25:43.992Z"}
+
+data: {"data":"Collecting authlib (from gradio[mcp,oauth]==5.50.0)","timestamp":"2026-02-12T03:25:43.992Z"}
+
+data: {"data":"  Downloading authlib-1.6.7-py2.py3-none-any.whl.metadata (9.8 kB)","timestamp":"2026-02-12T03:25:43.992Z"}
+
+data: {"data":"Collecting itsdangerous (from gradio[mcp,oauth]==5.50.0)","timestamp":"2026-02-12T03:25:43.992Z"}
+
+data: {"data":"  Downloading itsdangerous-2.2.0-py3-none-any.whl.metadata (1.9 kB)","timestamp":"2026-02-12T03:25:43.992Z"}
+
+data: {"data":"Collecting httpx-sse>=0.4 (from mcp==1.10.1->gradio[mcp,oauth]==5.50.0)","timestamp":"2026-02-12T03:25:43.992Z"}
+
+data: {"data":"  Downloading httpx_sse-0.4.3-py3-none-any.whl.metadata (9.7 kB)","timestamp":"2026-02-12T03:25:43.992Z"}
+
+data: {"data":"Collecting jsonschema>=4.20.0 (from mcp==1.10.1->gradio[mcp,oauth]==5.50.0)","timestamp":"2026-02-12T03:25:43.992Z"}
+
+data: {"data":"  Downloading jsonschema-4.26.0-py3-none-any.whl.metadata (7.6 kB)","timestamp":"2026-02-12T03:25:44.221Z"}
+
+data: {"data":"Collecting pydantic-settings>=2.5.2 (from mcp==1.10.1->gradio[mcp,oauth]==5.50.0)","timestamp":"2026-02-12T03:25:44.221Z"}
+
+data: {"data":"  Downloading pydantic_settings-2.12.0-py3-none-any.whl.metadata (3.4 kB)","timestamp":"2026-02-12T03:25:44.221Z"}
+
+data: {"data":"Collecting sse-starlette>=1.6.1 (from mcp==1.10.1->gradio[mcp,oauth]==5.50.0)","timestamp":"2026-02-12T03:25:44.221Z"}
+
+data: {"data":"  Downloading sse_starlette-3.2.0-py3-none-any.whl.metadata (12 kB)","timestamp":"2026-02-12T03:25:44.221Z"}
+
+data: {"data":"Requirement already satisfied: idna>=2.8 in /usr/local/lib/python3.13/site-packages (from anyio<5.0,>=3.0->gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (3.11)","timestamp":"2026-02-12T03:25:44.221Z"}
+
+data: {"data":"Requirement already satisfied: typing-inspection>=0.4.2 in /usr/local/lib/python3.13/site-packages (from fastapi<1.0,>=0.115.2->gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (0.4.2)","timestamp":"2026-02-12T03:25:44.221Z"}
+
+data: {"data":"Requirement already satisfied: annotated-doc>=0.0.2 in /usr/local/lib/python3.13/site-packages (from fastapi<1.0,>=0.115.2->gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (0.0.4)","timestamp":"2026-02-12T03:25:44.221Z"}
+
+data: {"data":"Requirement already satisfied: certifi in /usr/local/lib/python3.13/site-packages (from httpx<1.0,>=0.24.1->gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (2026.1.4)","timestamp":"2026-02-12T03:25:44.221Z"}
+
+data: {"data":"Requirement already satisfied: httpcore==1.* in /usr/local/lib/python3.13/site-packages (from httpx<1.0,>=0.24.1->gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (1.0.9)","timestamp":"2026-02-12T03:25:44.221Z"}
+
+data: {"data":"Requirement already satisfied: h11>=0.16 in /usr/local/lib/python3.13/site-packages (from httpcore==1.*->httpx<1.0,>=0.24.1->gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (0.16.0)","timestamp":"2026-02-12T03:25:44.221Z"}
+
+data: {"data":"Requirement already satisfied: filelock in /usr/local/lib/python3.13/site-packages (from huggingface-hub<2.0,>=0.33.5->gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (3.20.3)","timestamp":"2026-02-12T03:25:44.221Z"}
+
+data: {"data":"Requirement already satisfied: hf-xet<2.0.0,>=1.2.0 in /usr/local/lib/python3.13/site-packages (from huggingface-hub<2.0,>=0.33.5->gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (1.2.0)","timestamp":"2026-02-12T03:25:44.221Z"}
+
+data: {"data":"Requirement already satisfied: shellingham in /usr/local/lib/python3.13/site-packages (from huggingface-hub<2.0,>=0.33.5->gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (1.5.4)","timestamp":"2026-02-12T03:25:44.221Z"}
+
+data: {"data":"Requirement already satisfied: tqdm>=4.42.1 in /usr/local/lib/python3.13/site-packages (from huggingface-hub<2.0,>=0.33.5->gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (4.67.3)","timestamp":"2026-02-12T03:25:44.221Z"}
+
+data: {"data":"Requirement already satisfied: typer-slim in /usr/local/lib/python3.13/site-packages (from huggingface-hub<2.0,>=0.33.5->gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (0.23.0)","timestamp":"2026-02-12T03:25:44.221Z"}
+
+data: {"data":"Requirement already satisfied: python-dateutil>=2.8.2 in /usr/local/lib/python3.13/site-packages (from pandas<3.0,>=1.0->gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (2.9.0.post0)","timestamp":"2026-02-12T03:25:44.221Z"}
+
+data: {"data":"Requirement already satisfied: pytz>=2020.1 in /usr/local/lib/python3.13/site-packages (from pandas<3.0,>=1.0->gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (2025.2)","timestamp":"2026-02-12T03:25:44.221Z"}
+
+data: {"data":"Collecting tzdata>=2022.7 (from pandas<3.0,>=1.0->gradio==5.50.0->gradio[mcp,oauth]==5.50.0)","timestamp":"2026-02-12T03:25:44.221Z"}
+
+data: {"data":"  Downloading tzdata-2025.3-py2.py3-none-any.whl.metadata (1.4 kB)","timestamp":"2026-02-12T03:25:44.221Z"}
+
+data: {"data":"Requirement already satisfied: annotated-types>=0.6.0 in /usr/local/lib/python3.13/site-packages (from pydantic<=2.12.3,>=2.0->gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (0.7.0)","timestamp":"2026-02-12T03:25:44.221Z"}
+
+data: {"data":"Collecting pydantic-core==2.41.4 (from pydantic<=2.12.3,>=2.0->gradio==5.50.0->gradio[mcp,oauth]==5.50.0)","timestamp":"2026-02-12T03:25:44.614Z"}
+
+data: {"data":"  Downloading pydantic_core-2.41.4-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (7.3 kB)","timestamp":"2026-02-12T03:25:44.719Z"}
+
+data: {"data":"Requirement already satisfied: click>=8.0.0 in /usr/local/lib/python3.13/site-packages (from typer<1.0,>=0.12->gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (8.0.4)","timestamp":"2026-02-12T03:25:44.719Z"}
+
+data: {"data":"Requirement already satisfied: rich>=10.11.0 in /usr/local/lib/python3.13/site-packages (from typer<1.0,>=0.12->gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (14.3.2)","timestamp":"2026-02-12T03:25:44.719Z"}
+
+data: {"data":"Collecting psutil<6,>=2 (from spaces)","timestamp":"2026-02-12T03:25:44.719Z"}
+
+data: {"data":"  Downloading psutil-5.9.8-cp36-abi3-manylinux_2_12_x86_64.manylinux2010_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (21 kB)","timestamp":"2026-02-12T03:25:44.719Z"}
+
+data: {"data":"Requirement already satisfied: requests<3.0,>=2.19 in /usr/local/lib/python3.13/site-packages (from spaces) (2.32.5)","timestamp":"2026-02-12T03:25:44.719Z"}
+
+data: {"data":"Requirement already satisfied: charset_normalizer<4,>=2 in /usr/local/lib/python3.13/site-packages (from requests<3.0,>=2.19->spaces) (3.4.4)","timestamp":"2026-02-12T03:25:44.719Z"}
+
+data: {"data":"Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.13/site-packages (from requests<3.0,>=2.19->spaces) (2.6.3)","timestamp":"2026-02-12T03:25:44.719Z"}
+
+data: {"data":"Requirement already satisfied: attrs>=22.2.0 in /usr/local/lib/python3.13/site-packages (from jsonschema>=4.20.0->mcp==1.10.1->gradio[mcp,oauth]==5.50.0) (25.4.0)","timestamp":"2026-02-12T03:25:44.719Z"}
+
+data: {"data":"Collecting jsonschema-specifications>=2023.03.6 (from jsonschema>=4.20.0->mcp==1.10.1->gradio[mcp,oauth]==5.50.0)","timestamp":"2026-02-12T03:25:44.900Z"}
+
+data: {"data":"  Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl.metadata (2.9 kB)","timestamp":"2026-02-12T03:25:44.900Z"}
+
+data: {"data":"Collecting referencing>=0.28.4 (from jsonschema>=4.20.0->mcp==1.10.1->gradio[mcp,oauth]==5.50.0)","timestamp":"2026-02-12T03:25:44.900Z"}
+
+data: {"data":"  Downloading referencing-0.37.0-py3-none-any.whl.metadata (2.8 kB)","timestamp":"2026-02-12T03:25:44.900Z"}
+
+data: {"data":"Collecting rpds-py>=0.25.0 (from jsonschema>=4.20.0->mcp==1.10.1->gradio[mcp,oauth]==5.50.0)","timestamp":"2026-02-12T03:25:44.977Z"}
+
+data: {"data":"  Downloading rpds_py-0.30.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.1 kB)","timestamp":"2026-02-12T03:25:45.164Z"}
+
+data: {"data":"Collecting python-dotenv>=0.21.0 (from pydantic-settings>=2.5.2->mcp==1.10.1->gradio[mcp,oauth]==5.50.0)","timestamp":"2026-02-12T03:25:45.164Z"}
+
+data: {"data":"  Downloading python_dotenv-1.2.1-py3-none-any.whl.metadata (25 kB)","timestamp":"2026-02-12T03:25:45.164Z"}
+
+data: {"data":"Requirement already satisfied: six>=1.5 in /usr/local/lib/python3.13/site-packages (from python-dateutil>=2.8.2->pandas<3.0,>=1.0->gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (1.17.0)","timestamp":"2026-02-12T03:25:45.164Z"}
+
+data: {"data":"Requirement already satisfied: markdown-it-py>=2.2.0 in /usr/local/lib/python3.13/site-packages (from rich>=10.11.0->typer<1.0,>=0.12->gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (4.0.0)","timestamp":"2026-02-12T03:25:45.164Z"}
+
+data: {"data":"Requirement already satisfied: pygments<3.0.0,>=2.13.0 in /usr/local/lib/python3.13/site-packages (from rich>=10.11.0->typer<1.0,>=0.12->gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (2.19.2)","timestamp":"2026-02-12T03:25:45.164Z"}
+
+data: {"data":"Requirement already satisfied: mdurl~=0.1 in /usr/local/lib/python3.13/site-packages (from markdown-it-py>=2.2.0->rich>=10.11.0->typer<1.0,>=0.12->gradio==5.50.0->gradio[mcp,oauth]==5.50.0) (0.1.2)","timestamp":"2026-02-12T03:25:45.164Z"}
+
+data: {"data":"Collecting cryptography (from authlib->gradio[mcp,oauth]==5.50.0)","timestamp":"2026-02-12T03:25:45.168Z"}
+
+data: {"data":"  Downloading cryptography-46.0.5-cp311-abi3-manylinux_2_34_x86_64.whl.metadata (5.7 kB)","timestamp":"2026-02-12T03:25:45.273Z"}
+
+data: {"data":"Collecting cffi>=2.0.0 (from cryptography->authlib->gradio[mcp,oauth]==5.50.0)","timestamp":"2026-02-12T03:25:45.273Z"}
+
+data: {"data":"  Downloading cffi-2.0.0-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.6 kB)","timestamp":"2026-02-12T03:25:45.273Z"}
+
+data: {"data":"Collecting pycparser (from cffi>=2.0.0->cryptography->authlib->gradio[mcp,oauth]==5.50.0)","timestamp":"2026-02-12T03:25:45.273Z"}
+
+data: {"data":"  Downloading pycparser-3.0-py3-none-any.whl.metadata (8.2 kB)","timestamp":"2026-02-12T03:25:45.445Z"}
+
+data: {"data":"Downloading gradio-5.50.0-py3-none-any.whl (63.5 MB)","timestamp":"2026-02-12T03:25:45.445Z"}
+
+data: {"data":"   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 63.5/63.5 MB 174.7 MB/s  0:00:00","timestamp":"2026-02-12T03:25:45.762Z"}
+
+data: {"data":"Downloading gradio_client-1.14.0-py3-none-any.whl (325 kB)","timestamp":"2026-02-12T03:25:45.762Z"}
+
+data: {"data":"Downloading mcp-1.10.1-py3-none-any.whl (150 kB)","timestamp":"2026-02-12T03:25:45.762Z"}
+
+data: {"data":"Downloading websockets-15.0.1-cp313-cp313-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (182 kB)","timestamp":"2026-02-12T03:25:45.762Z"}
+
+data: {"data":"Downloading pandas-2.3.3-cp313-cp313-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (12.3 MB)","timestamp":"2026-02-12T03:25:45.762Z"}
+
+data: {"data":"   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.3/12.3 MB 151.7 MB/s  0:00:00","timestamp":"2026-02-12T03:25:45.864Z"}
+
+data: {"data":"Downloading pillow-11.3.0-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (6.6 MB)","timestamp":"2026-02-12T03:25:45.864Z"}
+
+data: {"data":"   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.6/6.6 MB 100.9 MB/s  0:00:00","timestamp":"2026-02-12T03:25:45.864Z"}
+
+data: {"data":"Downloading pydantic-2.12.3-py3-none-any.whl (462 kB)","timestamp":"2026-02-12T03:25:45.864Z"}
+
+data: {"data":"Downloading pydantic_core-2.41.4-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.1 MB)","timestamp":"2026-02-12T03:25:45.864Z"}
+
+data: {"data":"   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 199.2 MB/s  0:00:00","timestamp":"2026-02-12T03:25:45.864Z"}
+
+data: {"data":"Downloading spaces-0.47.0-py3-none-any.whl (105 kB)","timestamp":"2026-02-12T03:25:45.864Z"}
+
+data: {"data":"Downloading psutil-5.9.8-cp36-abi3-manylinux_2_12_x86_64.manylinux2010_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (288 kB)","timestamp":"2026-02-12T03:25:46.006Z"}
+
+data: {"data":"Downloading httpx_sse-0.4.3-py3-none-any.whl (9.0 kB)","timestamp":"2026-02-12T03:25:46.006Z"}
+
+data: {"data":"Downloading jsonschema-4.26.0-py3-none-any.whl (90 kB)","timestamp":"2026-02-12T03:25:46.006Z"}
+
+data: {"data":"Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)","timestamp":"2026-02-12T03:25:46.006Z"}
+
+data: {"data":"Downloading pydantic_settings-2.12.0-py3-none-any.whl (51 kB)","timestamp":"2026-02-12T03:25:46.006Z"}
+
+data: {"data":"Downloading python_dotenv-1.2.1-py3-none-any.whl (21 kB)","timestamp":"2026-02-12T03:25:46.006Z"}
+
+data: {"data":"Downloading referencing-0.37.0-py3-none-any.whl (26 kB)","timestamp":"2026-02-12T03:25:46.006Z"}
+
+data: {"data":"Downloading rpds_py-0.30.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (394 kB)","timestamp":"2026-02-12T03:25:46.006Z"}
+
+data: {"data":"Downloading ruff-0.15.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (11.1 MB)","timestamp":"2026-02-12T03:25:46.006Z"}
+
+data: {"data":"   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.1/11.1 MB 128.0 MB/s  0:00:00","timestamp":"2026-02-12T03:25:46.191Z"}
+
+data: {"data":"Downloading sse_starlette-3.2.0-py3-none-any.whl (12 kB)","timestamp":"2026-02-12T03:25:46.191Z"}
+
+data: {"data":"Downloading tzdata-2025.3-py2.py3-none-any.whl (348 kB)","timestamp":"2026-02-12T03:25:46.191Z"}
+
+data: {"data":"Downloading authlib-1.6.7-py2.py3-none-any.whl (244 kB)","timestamp":"2026-02-12T03:25:46.191Z"}
+
+data: {"data":"Downloading cryptography-46.0.5-cp311-abi3-manylinux_2_34_x86_64.whl (4.5 MB)","timestamp":"2026-02-12T03:25:46.191Z"}
+
+data: {"data":"   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.5/4.5 MB 707.9 MB/s  0:00:00","timestamp":"2026-02-12T03:25:46.191Z"}
+
+data: {"data":"Downloading cffi-2.0.0-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (219 kB)","timestamp":"2026-02-12T03:25:46.191Z"}
+
+data: {"data":"Downloading itsdangerous-2.2.0-py3-none-any.whl (16 kB)","timestamp":"2026-02-12T03:25:46.191Z"}
+
+data: {"data":"Downloading pycparser-3.0-py3-none-any.whl (48 kB)","timestamp":"2026-02-12T03:25:46.191Z"}
+
+data: {"data":"Installing collected packages: websockets, tzdata, ruff, rpds-py, python-dotenv, pydantic-core, pycparser, psutil, pillow, itsdangerous, httpx-sse, referencing, pydantic, pandas, cffi, sse-starlette, pydantic-settings, jsonschema-specifications, cryptography, jsonschema, authlib, mcp, gradio-client, gradio, spaces","timestamp":"2026-02-12T03:25:46.366Z"}
+
+data: {"data":"  Attempting uninstall: pydantic-core","timestamp":"2026-02-12T03:25:46.721Z"}
+
+data: {"data":"    Found existing installation: pydantic_core 2.41.5","timestamp":"2026-02-12T03:25:46.883Z"}
+
+data: {"data":"    Uninstalling pydantic_core-2.41.5:","timestamp":"2026-02-12T03:25:46.883Z"}
+
+data: {"data":"      Successfully uninstalled pydantic_core-2.41.5","timestamp":"2026-02-12T03:25:46.883Z"}
+
+data: {"data":"  Attempting uninstall: pillow","timestamp":"2026-02-12T03:25:46.998Z"}
+
+data: {"data":"    Found existing installation: pillow 12.1.1","timestamp":"2026-02-12T03:25:47.194Z"}
+
+data: {"data":"    Uninstalling pillow-12.1.1:","timestamp":"2026-02-12T03:25:47.194Z"}
+
+data: {"data":"      Successfully uninstalled pillow-12.1.1","timestamp":"2026-02-12T03:25:47.194Z"}
+
+data: {"data":"  Attempting uninstall: pydantic","timestamp":"2026-02-12T03:25:47.418Z"}
+
+data: {"data":"    Found existing installation: pydantic 2.12.5","timestamp":"2026-02-12T03:25:47.612Z"}
+
+data: {"data":"    Uninstalling pydantic-2.12.5:","timestamp":"2026-02-12T03:25:47.612Z"}
+
+data: {"data":"      Successfully uninstalled pydantic-2.12.5","timestamp":"2026-02-12T03:25:47.612Z"}
+
+data: {"data":"  Attempting uninstall: pandas","timestamp":"2026-02-12T03:25:47.781Z"}
+
+data: {"data":"    Found existing installation: pandas 3.0.0","timestamp":"2026-02-12T03:25:47.909Z"}
+
+data: {"data":"    Uninstalling pandas-3.0.0:","timestamp":"2026-02-12T03:25:47.909Z"}
+
+data: {"data":"      Successfully uninstalled pandas-3.0.0","timestamp":"2026-02-12T03:25:48.285Z"}
+
+data: {"data":"  Attempting uninstall: gradio-client","timestamp":"2026-02-12T03:25:53.266Z"}
+
+data: {"data":"    Found existing installation: gradio_client 2.0.3","timestamp":"2026-02-12T03:25:53.392Z"}
+
+data: {"data":"    Uninstalling gradio_client-2.0.3:","timestamp":"2026-02-12T03:25:53.392Z"}
+
+data: {"data":"      Successfully uninstalled gradio_client-2.0.3","timestamp":"2026-02-12T03:25:53.392Z"}
+
+data: {"data":"  Attempting uninstall: gradio","timestamp":"2026-02-12T03:25:53.392Z"}
+
+data: {"data":"    Found existing installation: gradio 6.5.1","timestamp":"2026-02-12T03:25:53.392Z"}
+
+data: {"data":"    Uninstalling gradio-6.5.1:","timestamp":"2026-02-12T03:25:53.392Z"}
+
+data: {"data":"      Successfully uninstalled gradio-6.5.1","timestamp":"2026-02-12T03:25:53.672Z"}
+
+data: {"data":"","timestamp":"2026-02-12T03:25:55.707Z"}
+
+data: {"data":"Successfully installed authlib-1.6.7 cffi-2.0.0 cryptography-46.0.5 gradio-5.50.0 gradio-client-1.14.0 httpx-sse-0.4.3 itsdangerous-2.2.0 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 mcp-1.10.1 pandas-2.3.3 pillow-11.3.0 psutil-5.9.8 pycparser-3.0 pydantic-2.12.3 pydantic-core-2.41.4 pydantic-settings-2.12.0 python-dotenv-1.2.1 referencing-0.37.0 rpds-py-0.30.0 ruff-0.15.0 spaces-0.47.0 sse-starlette-3.2.0 tzdata-2025.3 websockets-15.0.1","timestamp":"2026-02-12T03:25:55.869Z"}
+
+data: {"data":"WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.","timestamp":"2026-02-12T03:25:55.869Z"}
+
+data: {"data":"DONE 15.0s\n","timestamp":"2026-02-12T03:25:57.557Z"}
+
+data: {"data":"--> RUN mkdir -p /home/user && ( [ -e /home/user/app ] || ln -s /app/ /home/user/app ) || true","timestamp":"2026-02-12T03:25:57.681Z"}
+
+data: {"data":"DONE 0.1s\n","timestamp":"2026-02-12T03:25:57.681Z"}
+
+data: {"data":"--> COPY --link ./ /app","timestamp":"2026-02-12T03:25:57.924Z"}
+
+data: {"data":"DONE 0.0s\n","timestamp":"2026-02-12T03:25:57.924Z"}
+
+data: {"data":"--> RUN mkdir -p /pipfreeze","timestamp":"2026-02-12T03:25:57.924Z"}
+
+data: {"data":"DONE 0.1s\n","timestamp":"2026-02-12T03:25:57.924Z"}
+
+data: {"data":"--> RUN pip freeze > /pipfreeze/freeze.txt","timestamp":"2026-02-12T03:25:57.924Z"}
+
+data: {"data":"DONE 0.6s\n","timestamp":"2026-02-12T03:25:58.399Z"}
+
+data: {"data":"--> COPY --from=pipfreeze --link /pipfreeze/ /pipfreeze/","timestamp":"2026-02-12T03:25:59.872Z"}
+
+data: {"data":"DONE 0.0s\n","timestamp":"2026-02-12T03:25:59.872Z"}
+
+data: {"data":"--> Pushing image","timestamp":"2026-02-12T03:25:59.872Z"}
+
+data: {"data":"DONE 3.8s\n","timestamp":"2026-02-12T03:26:03.621Z"}
+
+data: {"data":"--> Exporting cache","timestamp":"2026-02-12T03:26:03.621Z"}
+
+data: {"data":"DONE 0.3s\n","timestamp":"2026-02-12T03:26:03.825Z"}
+
