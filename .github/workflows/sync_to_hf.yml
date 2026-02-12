@@ -34,33 +34,46 @@ jobs:
           GITHUB_COMMIT_TIME=$(git log -1 --format=%ct)
           echo "GitHub 最新提交時間: $(date -d @$GITHUB_COMMIT_TIME '+%Y-%m-%d %H:%M:%S')"
           
-          # 設定 HF 認證
-          CREDENTIALS_FILE=$(mktemp)
-          trap 'rm -f "$CREDENTIALS_FILE"' EXIT
-          chmod 600 "$CREDENTIALS_FILE"
-          echo "https://cwbdayi:${HF_TOKEN}@huggingface.co" > "$CREDENTIALS_FILE"
-          git config credential.helper "store --file=$CREDENTIALS_FILE"
+          # 設定 HF 認證使用 GIT_ASKPASS（更安全，不寫入磁碟）
+          GIT_ASKPASS_SCRIPT=$(mktemp)
+          trap 'rm -f "$GIT_ASKPASS_SCRIPT"' EXIT
+          chmod 700 "$GIT_ASKPASS_SCRIPT"
+          cat > "$GIT_ASKPASS_SCRIPT" << 'EOF'
+          #!/bin/sh
+          echo "$HF_TOKEN"
+          EOF
+          export GIT_ASKPASS="$GIT_ASKPASS_SCRIPT"
           
-          # 添加 HF remote
-          HF_REPO_URL="https://huggingface.co/spaces/cwbdayi/EEW_quality_control"
+          # 添加 HF remote with token in URL
+          HF_REPO_URL="https://cwbdayi:${HF_TOKEN}@huggingface.co/spaces/cwbdayi/EEW_quality_control"
           git remote add hf "$HF_REPO_URL" 2>/dev/null || git remote set-url hf "$HF_REPO_URL"
           
-          # 抓取 HF 的 main 分支
-          if git fetch hf main 2>/dev/null; then
+          # 抓取 HF 的 main 分支（保留錯誤訊息以便診斷）
+          FETCH_OUTPUT=$(git fetch hf main 2>&1)
+          FETCH_STATUS=$?
+          
+          if [ $FETCH_STATUS -eq 0 ]; then
             # 取得 HF 最新提交時間
-            HF_COMMIT_TIME=$(git log -1 --format=%ct hf/main)
-            echo "HF 最新提交時間: $(date -d @$HF_COMMIT_TIME '+%Y-%m-%d %H:%M:%S')"
+            HF_COMMIT_TIME=$(git log -1 --format=%ct hf/main 2>/dev/null)
             
-            # 比較時間
-            if [ $HF_COMMIT_TIME -gt $GITHUB_COMMIT_TIME ]; then
-              echo "✅ HF 有較新的變更 (時間差: $((HF_COMMIT_TIME - GITHUB_COMMIT_TIME)) 秒)"
-              echo "should_sync=true" >> $GITHUB_OUTPUT
+            # 檢查是否成功取得時間戳
+            if [ -n "$HF_COMMIT_TIME" ] && [ -n "$GITHUB_COMMIT_TIME" ]; then
+              echo "HF 最新提交時間: $(date -d @$HF_COMMIT_TIME '+%Y-%m-%d %H:%M:%S')"
+              
+              # 比較時間（使用引號保護變數）
+              if [ "$HF_COMMIT_TIME" -gt "$GITHUB_COMMIT_TIME" ]; then
+                echo "✅ HF 有較新的變更 (時間差: $((HF_COMMIT_TIME - GITHUB_COMMIT_TIME)) 秒)"
+                echo "should_sync=true" >> $GITHUB_OUTPUT
+              else
+                echo "⏸️ GitHub 已是最新版本或較新"
+                echo "should_sync=false" >> $GITHUB_OUTPUT
+              fi
             else
-              echo "⏸️ GitHub 已是最新版本或較新"
+              echo "⚠️ 無法取得提交時間戳，跳過同步"
               echo "should_sync=false" >> $GITHUB_OUTPUT
             fi
           else
-            echo "⚠️ 無法抓取 HF 資料，跳過同步"
+            echo "⚠️ 無法抓取 HF 資料: $FETCH_OUTPUT"
             echo "should_sync=false" >> $GITHUB_OUTPUT
           fi
 
