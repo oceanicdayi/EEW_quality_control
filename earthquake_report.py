@@ -8,7 +8,7 @@ and saves it to a file for email delivery via GitHub Actions.
 
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from usgs_earthquake import OrderBy, UsgsClient
@@ -19,9 +19,14 @@ MAX_DISPLAY = 50
 def fetch_earthquakes():
     """Fetch recent significant earthquakes from the USGS API."""
     client = UsgsClient()
+    now = datetime.now(timezone.utc)
+    five_days_ago = now - timedelta(days=5)
+    
     result = (
         client.query()
-        .min_magnitude(4.5)
+        .start_time(five_days_ago.year, five_days_ago.month, five_days_ago.day,
+                   five_days_ago.hour, five_days_ago.minute)
+        .min_magnitude(5.0)
         .order_by(OrderBy.TIME)
         .fetch()
     )
@@ -38,7 +43,7 @@ def format_report(result):
 
     lines = []
     lines.append("=" * 70)
-    lines.append("  USGS Earthquake Report (M >= 4.5, last 30 days)")
+    lines.append("  USGS Earthquake Report (M >= 5.0, last 5 days)")
     lines.append("=" * 70)
     lines.append(f"  Generated: {now}")
     lines.append(f"  Total earthquakes found: {len(features)}")

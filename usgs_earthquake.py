@@ -31,7 +31,7 @@ Example:
         print(f"  {props['place']} - M{props['mag']}")
 """
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 
 import requests
@@ -170,15 +170,20 @@ class UsgsClient:
 def main():
     """Fetch recent significant earthquakes and print a summary."""
     client = UsgsClient()
+    now = datetime.now(timezone.utc)
+    five_days_ago = now - timedelta(days=5)
+    
     result = (
         client.query()
-        .min_magnitude(4.5)
+        .start_time(five_days_ago.year, five_days_ago.month, five_days_ago.day,
+                   five_days_ago.hour, five_days_ago.minute)
+        .min_magnitude(5.0)
         .order_by(OrderBy.TIME)
         .fetch()
     )
 
     features = result.get("features", [])
-    print(f"Total earthquakes (M≥4.5, last 30 days): {len(features)}\n")
+    print(f"Total earthquakes (M≥5.0, last 5 days): {len(features)}\n")
     for eq in features[:20]:
         props = eq["properties"]
         mag = props.get("mag", "?")
