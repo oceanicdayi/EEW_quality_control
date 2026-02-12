@@ -1,0 +1,49 @@
+name: USGS Earthquake Report
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Run daily at midnight UTC
+  workflow_dispatch: # Allow manual trigger
+  push:
+    branches: [main]
+    paths:
+      - 'usgs_earthquake.py'
+      - 'earthquake_report.py'
+      - '.github/workflows/usgs_earthquake_report.yml'
+
+jobs:
+  earthquake-report:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: 📦 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 📥 Install Dependencies
+        run: pip install requests
+
+      - name: 🌍 Run USGS Earthquake Query
+        run: python3 usgs_earthquake.py
+
+      - name: 📊 Generate Earthquake Report
+        run: python3 earthquake_report.py
+
+      - name: 📧 Email Earthquake Report
+        if: always()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.MAIL_SERVER }}
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "🌍 USGS Earthquake Report [Run #${{ github.run_number }}]"
+          to: oceanicdayi@gmail.com
+          from: GitHub Actions <github-actions@noreply.github.com>
+          body: file://earthquake_report.txt
