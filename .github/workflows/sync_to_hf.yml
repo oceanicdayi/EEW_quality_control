@@ -4,10 +4,97 @@ on:
   push:
     branches: [main] # 當 main 分支有更新時觸發
   workflow_dispatch: # 允許手動觸發
+  schedule:
+    - cron: '0 */6 * * *' # 每6小時執行一次，檢查 HF 是否有更新
 
 jobs:
+  check-hf-updates:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      HF_SPACE: cwbdayi/EEW_quality_control
+    steps:
+      - name: Checkout GitHub repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check if HF has newer changes
+        id: check_hf
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          # 設定 Git 配置
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # 取得 GitHub 最新提交時間
+          GITHUB_COMMIT_TIME=$(git log -1 --format=%ct)
+          echo "GitHub 最新提交時間: $(date -d @$GITHUB_COMMIT_TIME '+%Y-%m-%d %H:%M:%S')"
+          
+          # 設定 HF 認證
+          CREDENTIALS_FILE=$(mktemp)
+          trap 'rm -f "$CREDENTIALS_FILE"' EXIT
+          chmod 600 "$CREDENTIALS_FILE"
+          echo "https://cwbdayi:${HF_TOKEN}@huggingface.co" > "$CREDENTIALS_FILE"
+          git config credential.helper "store --file=$CREDENTIALS_FILE"
+          
+          # 添加 HF remote
+          HF_REPO_URL="https://huggingface.co/spaces/cwbdayi/EEW_quality_control"
+          git remote add hf "$HF_REPO_URL" 2>/dev/null || git remote set-url hf "$HF_REPO_URL"
+          
+          # 抓取 HF 的 main 分支
+          if git fetch hf main 2>/dev/null; then
+            # 取得 HF 最新提交時間
+            HF_COMMIT_TIME=$(git log -1 --format=%ct hf/main)
+            echo "HF 最新提交時間: $(date -d @$HF_COMMIT_TIME '+%Y-%m-%d %H:%M:%S')"
+            
+            # 比較時間
+            if [ $HF_COMMIT_TIME -gt $GITHUB_COMMIT_TIME ]; then
+              echo "✅ HF 有較新的變更 (時間差: $((HF_COMMIT_TIME - GITHUB_COMMIT_TIME)) 秒)"
+              echo "should_sync=true" >> $GITHUB_OUTPUT
+            else
+              echo "⏸️ GitHub 已是最新版本或較新"
+              echo "should_sync=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "⚠️ 無法抓取 HF 資料，跳過同步"
+            echo "should_sync=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Sync from HF to GitHub
+        if: steps.check_hf.outputs.should_sync == 'true'
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          echo "📥 開始從 HF 同步到 GitHub..."
+          
+          # 取得當前分支
+          CURRENT_BRANCH=$(git branch --show-current)
+          
+          # 檢查 HF 的變更內容
+          echo "🔍 檢查 HF 的變更..."
+          git log --oneline ${CURRENT_BRANCH}..hf/main | head -10
+          
+          # 合併 HF 的變更（使用 theirs 策略優先採用 HF 的版本）
+          if git merge hf/main --no-edit -m "🔄 從 HF 同步較新的變更"; then
+            echo "✅ 成功合併 HF 變更"
+            
+            # 推送到 GitHub
+            git push origin ${CURRENT_BRANCH}
+            echo "✅ 已推送更新到 GitHub"
+          else
+            echo "⚠️ 合併衝突，需要手動處理"
+            git merge --abort
+            exit 1
+          fi
+
   sync-to-hub:
     runs-on: ubuntu-latest
+    needs: check-hf-updates
+    if: github.event_name == 'push'
     permissions:
       contents: write
     env:
