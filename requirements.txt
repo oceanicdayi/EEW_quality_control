@@ -1,7 +1,3 @@
-obspy
 gradio
-matplotlib
-numpy
-setuptools
-scipy
-lxml
+obspy
+folium
