@@ -23,6 +23,7 @@ Taiwan Earthquake Data Fetcher - Fetch Taiwan earthquake records and seismic wav
 - 🗺️ **資料視覺化**：繪製地震分布圖和波形圖
 - ⚙️ **彈性搜尋條件**：可自訂時間範圍、震級、深度和地理區域
 - 🌐 **網頁介面**：使用 Gradio 提供友善的互動式介面
+- 🔄 **雙向同步**：GitHub 與 Hugging Face Space 之間自動雙向同步（詳見 [SYNC_WORKFLOW.md](SYNC_WORKFLOW.md)）
 
 ### Earthquake Catalog Search
 Query earthquake records from the Taiwan region via IRIS FDSN services
