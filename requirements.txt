@@ -1,5 +1,4 @@
-setuptools>=78.1.1
-obspy>=1.4.0
-gradio>=5.0.0,<6.0.0
-matplotlib>=3.7.0
-numpy>=1.24.0
+obspy
+gradio
+matplotlib
+numpy
