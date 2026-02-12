@@ -42,13 +42,13 @@ def intensity_from_pga(pga_gal):
     elif pga_gal < 80:
         return "4 – Moderate"
     elif pga_gal < 140:
-        return "5 Weak"
+        return "5 – Weak"
     elif pga_gal < 250:
-        return "5 Strong"
+        return "5 – Strong"
     elif pga_gal < 440:
-        return "6 Weak"
+        return "6 – Weak"
     elif pga_gal < 800:
-        return "6 Strong"
+        return "6 – Strong"
     else:
         return "7 – Severe"
 
