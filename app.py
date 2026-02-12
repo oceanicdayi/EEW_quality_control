@@ -1,146 +1,155 @@
 import gradio as gr
-from obspy import UTCDateTime
+import folium
+from folium.plugins import MarkerCluster
 from obspy.clients.fdsn import Client
-import matplotlib.pyplot as plt
-import matplotlib
-import io
+from obspy import UTCDateTime
+import warnings
 
-# 設定 Matplotlib 後端為 Agg，避免在無螢幕環境(Server)報錯
-matplotlib.use('Agg')
+# 忽略 Obspy 的特定警告
+warnings.filterwarnings("ignore", message="The coordinates conversion method is not specified.*")
 
-def fetch_earthquake_data(start_time_str, end_time_str, min_mag, request_waveforms):
+def get_earthquake_map(start_time_str, end_time_str, min_mag, max_mag):
     """
-    主要處理函數：搜尋地震並抓取波形
+    從 IRIS FDSN 獲取地震目錄並在 Folium 地圖上繪製。
     """
-    client = Client("IRIS")
-    
-    # 1. 解析時間
     try:
-        t1 = UTCDateTime(start_time_str)
-        t2 = UTCDateTime(end_time_str)
-    except:
-        return None, None, "❌ 時間格式錯誤，請使用 YYYY-MM-DD 格式 (例如: 2024-04-03)"
+        # 1. 轉換時間字串為 UTCDateTime 物件
+        start_time = UTCDateTime(start_time_str)
+        end_time = UTCDateTime(end_time_str)
 
-    # 2. 定義台灣的大致經緯度範圍
-    min_lat, max_lat = 21.0, 26.0
-    min_lon, max_lon = 119.0, 123.0
+        # 2. 初始化 FDSN 客戶端
+        client = Client("IRIS")
 
-    status_log = []
-    status_log.append(f"🔍 正在搜尋 {t1.date} 到 {t2.date} 規模 > {min_mag} 的地震...")
-
-    # 3. 搜尋地震目錄 (Catalog)
-    try:
+        # 3. 獲取地震目錄
         catalog = client.get_events(
-            starttime=t1,
-            endtime=t2,
+            starttime=start_time,
+            endtime=end_time,
             minmagnitude=min_mag,
-            minlatitude=min_lat,
-            maxlatitude=max_lat,
-            minlongitude=min_lon,
-            maxlongitude=max_lon
+            maxmagnitude=max_mag
         )
-        status_log.append(f"✅ 找到 {len(catalog)} 起地震。")
-    except Exception as e:
-        return None, None, f"❌ 搜尋地震目錄失敗: {str(e)}"
 
-    if len(catalog) == 0:
-        return None, None, "⚠️ 此條件下未找到任何地震紀錄。"
+        # 4. 建立 Folium 地圖
+        # 以台灣為中心點，但可以調整
+        m = folium.Map(location=[23.5, 121], zoom_start=6, tiles="CartoDB positron")
 
-    # 4. 繪製地震分佈圖 (Map)
-    # 為了避免 ObsPy 內建 plot 依賴 Basemap/Cartopy 在雲端環境出錯，我們用純 Matplotlib 畫簡單散佈圖
-    fig_map = plt.figure(figsize=(10, 6))
-    lats = []
-    lons = []
-    mags = []
-    
-    for event in catalog:
-        origin = event.preferred_origin() or event.origins[0]
-        mag = event.preferred_magnitude() or event.magnitudes[0]
-        lats.append(origin.latitude)
-        lons.append(origin.longitude)
-        mags.append(mag.mag)
+        if not catalog:
+            # 如果沒有找到事件，回傳一個空地圖和訊息
+            folium.Marker(
+                [23.5, 121], 
+                popup="在指定範圍內沒有找到地震事件。"
+            ).add_to(m)
+            return m._repr_html_()
 
-    plt.scatter(lons, lats, s=[m**3 for m in mags], c=mags, cmap='Reds', alpha=0.7, edgecolors='k')
-    plt.colorbar(label='Magnitude')
-    plt.title(f"Earthquakes in Taiwan Region ({t1.date} - {t2.date})")
-    plt.xlabel("Longitude")
-    plt.ylabel("Latitude")
-    plt.grid(True, linestyle='--', alpha=0.5)
-    
-    # 標示台灣範圍框
-    plt.xlim(min_lon-0.5, max_lon+0.5)
-    plt.ylim(min_lat-0.5, max_lat+0.5)
+        # 5. 建立一個 MarkerCluster
+        marker_cluster = MarkerCluster().add_to(m)
 
-    # 5. 抓取波形 (Waveforms)
-    fig_wave = None
-    
-    if request_waveforms and len(catalog) > 0:
-        # 為了演示，我們只抓取「規模最大」的那一個地震
-        target_event = max(catalog, key=lambda e: (e.preferred_magnitude() or e.magnitudes[0]).mag)
-        origin = target_event.preferred_origin() or target_event.origins[0]
-        event_time = origin.time
-        
-        mag_val = (target_event.preferred_magnitude() or target_event.magnitudes[0]).mag
-        status_log.append(f"🌊 正在抓取最大地震 (M{mag_val}, {event_time}) 的波形數據...")
-        status_log.append("   目標測站網: IU, TW (IRIS 資料庫)")
+        # 6. 遍歷地震事件並添加到地圖
+        for event in catalog:
+            try:
+                # 獲取首選的震源和規模
+                origin = event.preferred_origin()
+                magnitude = event.preferred_magnitude()
 
-        try:
-            # 設定抓取波形的參數
-            # 注意：IRIS 上不一定有完整的 TW 網路即時資料，通常 IU (Global Seismograph Network) 較穩定
-            st = client.get_waveforms(
-                network="TW,IU",      # 台灣寬頻網 與 全球網
-                station="*",          # 所有測站
-                location="*",
-                channel="BHZ,HHZ",    # 只抓垂直分量以節省流量
-                starttime=event_time,
-                endtime=event_time + 120, # 抓取起始後 120 秒
-                attach_response=False 
-            )
-            
-            if len(st) > 0:
-                status_log.append(f"✅ 成功下載 {len(st)} 條波形紀錄。")
+                if not origin or not magnitude:
+                    continue
+
+                lat = origin.latitude
+                lon = origin.longitude
+                # 深度（公尺），轉換為公里
+                depth_km = origin.depth / 1000.0 if origin.depth else 0
+                mag_value = magnitude.mag
+                mag_type = magnitude.magnitude_type
+                event_time = origin.time.strftime('%Y-%m-%d %H:%M:%S UTC')
+
+                # 建立彈出視窗的 HTML
+                popup_html = f"""
+                <b>時間:</b> {event_time}<br>
+                <b>規模:</b> {mag_value:.1f} ({mag_type})<br>
+                <b>深度:</b> {depth_km:.1f} km<br>
+                <b>位置:</b> ({lat:.2f}, {lon:.2f})
+                """
+
+                # 根據規模設定圓圈大小
+                radius = mag_value * 2
+
+                # 添加 CircleMarker 到 MarkerCluster
+                folium.CircleMarker(
+                    location=[lat, lon],
+                    radius=radius,
+                    popup=folium.Popup(popup_html, max_width=300),
+                    color="red",
+                    fill=True,
+                    fill_color="red",
+                    fill_opacity=0.4
+                ).add_to(marker_cluster)
                 
-                # 簡單的波形繪圖
-                fig_wave = plt.figure(figsize=(10, 8))
-                st.plot(fig=fig_wave, type='relative') # 使用 ObsPy 的繪圖功能並注入 figure
-            else:
-                status_log.append("⚠️ 伺服器回應無波形資料 (可能是 IRIS 沒有該時段 TW 網資料)。")
+            except Exception as e:
+                # 忽略單一事件的錯誤
+                print(f"處理事件時發生錯誤: {e}")
 
-        except Exception as e:
-            status_log.append(f"⚠️ 波形下載失敗或部分遺失: {str(e)}")
+        # 添加圖層控制器
+        folium.LayerControl().add_to(m)
 
-    # 整理輸出文字
-    result_text = "\n".join(status_log)
-    
-    return fig_map, fig_wave, result_text
+        # 7. 回傳地圖的 HTML 內容
+        return m._repr_html_()
 
-# --- Gradio 介面設定 ---
+    except Exception as e:
+        # 處理主要錯誤 (例如 FDSN 服務無法連線或時間格式錯誤)
+        return f"<p style='color:red;'>查詢時發生錯誤：{e}</p>"
 
-with gr.Blocks(title="台灣地震資料檢索 (IRIS FDSN)") as demo:
-    gr.Markdown("# 🇹🇼 台灣地震資料檢索系統 (Based on ObsPy & IRIS)")
-    gr.Markdown("此工具透過 IRIS FDSN Client 搜尋台灣區域地震，並嘗試從 `IU` (全球網) 與 `TW` (台灣網) 抓取波形。")
+# 建立 Gradio 介面
+with gr.Blocks(title="地震目錄視覺化") as demo:
+    gr.Markdown("# IRIS FDSN 地震目錄地圖")
+    gr.Markdown("使用 Obspy 從 IRIS FDSN 抓取地震目錄，並使用 Folium 繪製互動式地圖。")
     
     with gr.Row():
-        with gr.Column():
-            start_date = gr.Textbox(value="2024-04-03", label="開始日期 (YYYY-MM-DD)")
-            end_date = gr.Textbox(value="2024-04-04", label="結束日期 (YYYY-MM-DD)")
-            min_mag = gr.Slider(minimum=3.0, maximum=9.0, value=5.0, step=0.1, label="最小規模 (Magnitude)")
-            get_wave = gr.Checkbox(value=True, label="同時下載最大地震之波形 (會較慢)")
-            submit_btn = gr.Button("開始搜尋", variant="primary")
+        start_time_input = gr.Textbox(
+            label="開始時間 (UTC)", 
+            value="2024-04-02T16:00:00",
+            info="格式: YYYY-MM-DDTHH:MM:SS"
+        )
+        end_time_input = gr.Textbox(
+            label="結束時間 (UTC)", 
+            value="2024-04-03T16:00:00",
+            info="格式: YYYY-MM-DDTHH:MM:SS"
+        )
+    
+    with gr.Row():
+        min_mag_input = gr.Slider(
+            label="最小規模", 
+            minimum=0.0, 
+            maximum=10.0, 
+            value=4.0, 
+            step=0.1
+        )
+        max_mag_input = gr.Slider(
+            label="最大規模", 
+            minimum=0.0, 
+            maximum=10.0, 
+            value=10.0, 
+            step=0.1
+        )
         
-        with gr.Column():
-            output_log = gr.Textbox(label="執行狀態與結果", lines=6)
+    submit_btn = gr.Button("查詢並繪製地圖", variant="primary")
     
-    with gr.Row():
-        map_plot = gr.Plot(label="地震分佈圖")
-        wave_plot = gr.Plot(label="地震波形圖 (最大事件)")
+    # 輸出元件：使用 gr.HTML 來顯示 Folium 地圖
+    map_output = gr.HTML(label="地震分佈圖")
 
+    # 綁定按鈕點擊事件
     submit_btn.click(
-        fn=fetch_earthquake_data,
-        inputs=[start_date, end_date, min_mag, get_wave],
-        outputs=[map_plot, wave_plot, output_log]
+        fn=get_earthquake_map,
+        inputs=[start_time_input, end_time_input, min_mag_input, max_mag_input],
+        outputs=[map_output]
+    )
+    
+    gr.Examples(
+        [
+            ["2011-03-10T00:00:00", "2011-03-12T00:00:00", 7.0, 10.0], # 2011 日本東北大地震
+            ["2024-04-02T16:00:00", "2024-04-04T00:00:00", 5.0, 10.0], # 2024 台灣花蓮地震
+            ["2023-02-06T00:00:00", "2023-02-07T00:00:00", 6.0, 10.0]  # 2023 土耳其大地震
+        ],
+        inputs=[start_time_input, end_time_input, min_mag_input, max_mag_input]
     )
 
-# 啟動應用
 if __name__ == "__main__":
     demo.launch()
