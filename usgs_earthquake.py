@@ -116,7 +116,7 @@ class UsgsQuery:
     # --- execution ---------------------------------------------------------
 
     def _build_params(self) -> dict:
-        """Build the query‑string parameters."""
+        """Build the query-string parameters."""
         params: dict = {
             "format": "geojson",
             "endtime": self._end_time.strftime("%Y-%m-%dT%H:%M:%S"),
